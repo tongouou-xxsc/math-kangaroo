@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Kangaroo · 管理后台</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#080812;--surface:#0f0f20;--card:#161628;--border:#252540;
+    --accent:#f7c948;--accent2:#ff6b6b;--accent4:#7c9fff;--text:#e8e8f0;
+    --muted:#666680;--easy:#6ee7b7;--medium:#f7c948;--hard:#ff6b6b;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-height:100vh;display:flex;}
+
+  /* Sidebar */
+  aside{width:220px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);
+    display:flex;flex-direction:column;padding:20px 0;}
+  .sidebar-logo{padding:8px 20px 24px;display:flex;align-items:center;gap:10px;
+    font-family:'Fredoka One';font-size:1.1rem;color:var(--accent);}
+  .sidebar-logo span{font-size:1.4rem;}
+  .sidebar-badge{font-size:0.6rem;background:var(--accent2);color:#fff;padding:2px 7px;
+    border-radius:999px;font-weight:800;text-transform:uppercase;margin-left:2px;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;
+    font-weight:700;font-size:0.88rem;color:var(--muted);border-left:3px solid transparent;
+    transition:all .2s;}
+  .nav-item:hover{color:var(--text);background:rgba(255,255,255,.03);}
+  .nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(247,201,72,.05);}
+  .nav-icon{font-size:1rem;width:20px;text-align:center;}
+  .sidebar-footer{margin-top:auto;padding:16px 20px;border-top:1px solid var(--border);}
+  .btn-logout{width:100%;padding:9px;border-radius:8px;border:1px solid var(--border);
+    background:transparent;color:var(--muted);font-family:'Nunito';font-weight:700;
+    font-size:0.82rem;cursor:pointer;transition:all .2s;}
+  .btn-logout:hover{border-color:var(--accent2);color:var(--accent2);}
+
+  /* Main */
+  main{flex:1;overflow-y:auto;padding:28px;}
+  .page-title{font-family:'Fredoka One';font-size:1.8rem;color:var(--text);margin-bottom:24px;}
+  .page{display:none;}
+  .page.active{display:block;}
+
+  /* Summary cards */
+  .summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:28px;}
+  .sum-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;}
+  .sum-card .sc-icon{font-size:1.6rem;margin-bottom:8px;}
+  .sum-card .sc-val{font-family:'Fredoka One';font-size:2rem;display:block;}
+  .sum-card .sc-label{color:var(--muted);font-size:0.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-top:3px;}
+  .sum-card.students .sc-val{color:var(--accent4);}
+  .sum-card.answers .sc-val{color:var(--easy);}
+  .sum-card.rate .sc-val{color:var(--accent);}
+  .sum-card.time .sc-val{color:var(--accent2);}
+
+  /* Table */
+  .table-wrap{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:24px;}
+  .table-header{display:flex;align-items:center;justify-content:space-between;
+    padding:16px 20px;border-bottom:1px solid var(--border);}
+  .table-title{font-family:'Fredoka One';font-size:1rem;color:var(--text);}
+  .search-input{padding:7px 14px;border-radius:8px;border:1px solid var(--border);
+    background:var(--surface);color:var(--text);font-family:'Nunito';font-weight:600;
+    font-size:0.82rem;outline:none;width:200px;}
+  .search-input:focus{border-color:var(--accent4);}
+  table{width:100%;border-collapse:collapse;}
+  th{background:var(--surface);padding:10px 16px;text-align:left;font-size:0.72rem;
+    font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);
+    border-bottom:1px solid var(--border);}
+  td{padding:12px 16px;font-size:0.85rem;font-weight:600;border-bottom:1px solid rgba(46,46,85,.5);}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:rgba(255,255,255,.02);}
+  .badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:0.7rem;font-weight:800;}
+  .badge.student{background:rgba(124,159,255,.15);color:var(--accent4);}
+  .badge.admin{background:rgba(247,201,72,.15);color:var(--accent);}
+  .btn-sm{padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:transparent;
+    color:var(--muted);font-family:'Nunito';font-weight:700;font-size:0.75rem;cursor:pointer;transition:all .2s;}
+  .btn-sm:hover{border-color:var(--accent4);color:var(--accent4);}
+  .btn-sm.danger:hover{border-color:var(--accent2);color:var(--accent2);}
+  .btn-sm.success{border-color:var(--easy);color:var(--easy);}
+  .rate-bar{display:flex;align-items:center;gap:8px;}
+  .mini-bar{width:80px;height:5px;background:var(--border);border-radius:999px;overflow:hidden;}
+  .mini-fill{height:100%;background:linear-gradient(90deg,var(--easy),#34d399);border-radius:999px;}
+  .rate-txt{font-size:0.8rem;font-weight:800;color:var(--easy);}
+
+  /* Student Detail Modal */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);
+    z-index:1000;display:none;align-items:center;justify-content:center;}
+  .modal-overlay.show{display:flex;}
+  .modal{background:var(--card);border:1px solid var(--border);border-radius:20px;
+    padding:28px;width:90%;max-width:600px;max-height:80vh;overflow-y:auto;}
+  .modal-title{font-family:'Fredoka One';font-size:1.3rem;color:var(--accent);margin-bottom:20px;
+    display:flex;justify-content:space-between;align-items:center;}
+  .modal-close{background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;}
+  .modal-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+  .ms{background:var(--surface);border:1px solid var(--border);border-radius:10px;
+    padding:12px;text-align:center;}
+  .ms .v{font-family:'Fredoka One';font-size:1.4rem;}
+  .ms .l{font-size:0.68rem;font-weight:700;text-transform:uppercase;color:var(--muted);margin-top:2px;}
+
+  /* Charts section */
+  .chart-section{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:24px;}
+  .chart-title{font-family:'Fredoka One';font-size:1rem;margin-bottom:16px;color:var(--text);}
+  .bar-chart{display:flex;align-items:flex-end;gap:8px;height:120px;}
+  .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+  .bar-body{width:100%;border-radius:4px 4px 0 0;transition:height .8s ease;min-height:2px;}
+  .bar-body.correct-bar{background:linear-gradient(180deg,var(--easy),#059669);}
+  .bar-body.answered-bar{background:linear-gradient(180deg,var(--accent4),#3b82f6);}
+  .bar-xlabel{font-size:0.65rem;font-weight:700;color:var(--muted);}
+  .bar-pct{font-size:0.65rem;font-weight:800;color:var(--easy);}
+
+  /* Leaderboard */
+  .lb-item{display:flex;align-items:center;gap:12px;padding:12px 16px;
+    background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;}
+  .lb-rank{font-family:'Fredoka One';font-size:1.2rem;width:32px;text-align:center;flex-shrink:0;}
+  .lb-rank.gold{color:gold;}
+  .lb-rank.silver{color:silver;}
+  .lb-rank.bronze{color:#cd7f32;}
+  .lb-name{flex:1;font-weight:700;}
+  .lb-stat{font-family:'Fredoka One';color:var(--accent);}
+
+  .loading-text{text-align:center;padding:40px;color:var(--muted);font-weight:600;}
+</style>
+</head>
+<body>
+<aside>
+  <div class="sidebar-logo">
+    <span>🦘</span> Admin <span class="sidebar-badge">管理</span>
+  </div>
+  <div class="nav-item active" onclick="showPage('dashboard')">
+    <span class="nav-icon">📊</span> 数据总览
+  </div>
+  <div class="nav-item" onclick="showPage('students')">
+    <span class="nav-icon">👥</span> 学生管理
+  </div>
+  <div class="nav-item" onclick="showPage('leaderboard')">
+    <span class="nav-icon">🏆</span> 正确率排行
+  </div>
+  <div class="nav-item" onclick="showPage('activity')">
+    <span class="nav-icon">📅</span> 答题记录
+  </div>
+  <div class="sidebar-footer">
+    <button class="btn-logout" onclick="handleLogout()">🚪 退出登录</button>
+  </div>
+</aside>
+
+<main>
+  <!-- Dashboard -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-title">📊 数据总览</div>
+    <div class="summary-grid" id="summaryGrid">
+      <div class="loading-text" style="grid-column:1/-1">⏳ 加载中...</div>
+    </div>
+    <div class="chart-section">
+      <div class="chart-title">📅 各年份答题覆盖 & 正确率</div>
+      <div class="bar-chart" id="yearChart">
+        <div class="loading-text">加载中...</div>
+      </div>
+      <div style="display:flex;gap:16px;margin-top:12px;font-size:0.75rem;font-weight:700">
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:var(--easy);display:inline-block"></span>正确率</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:var(--accent4);display:inline-block"></span>答题覆盖</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Students -->
+  <div class="page" id="page-students">
+    <div class="page-title">👥 学生管理</div>
+    <div class="table-wrap">
+      <div class="table-header">
+        <span class="table-title">所有学生</span>
+        <input type="text" class="search-input" placeholder="🔍 搜索姓名/邮箱..." oninput="filterStudents(this.value)"/>
+      </div>
+      <table>
+        <thead><tr>
+          <th>姓名</th><th>邮箱</th><th>答题数</th><th>正确率</th><th>平均用时</th><th>注册时间</th><th>操作</th>
+        </tr></thead>
+        <tbody id="studentsTable"><tr><td colspan="7" class="loading-text">⏳ 加载中...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Leaderboard -->
+  <div class="page" id="page-leaderboard">
+    <div class="page-title">🏆 正确率排行榜</div>
+    <div style="color:var(--muted);font-size:0.82rem;margin-bottom:16px;font-weight:600">
+      （至少答过 10 题的学生）
+    </div>
+    <div id="leaderboardList"><div class="loading-text">⏳ 加载中...</div></div>
+  </div>
+
+  <!-- Activity -->
+  <div class="page" id="page-activity">
+    <div class="page-title">📅 最近答题记录</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>学生</th><th>题目</th><th>年份</th><th>难度</th><th>结果</th><th>用时</th><th>时间</th></tr></thead>
+        <tbody id="activityTable"><tr><td colspan="7" class="loading-text">⏳ 加载中...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<!-- Student Detail Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modalContent">
+    <div class="modal-title">
+      <span id="modalStudentName">学生详情</span>
+      <button class="modal-close" onclick="document.getElementById('modalOverlay').classList.remove('show')">×</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getFirestore, doc, getDoc, collection, query, orderBy, limit,
+           getDocs, updateDoc, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBDoFjVpeJKtnemdu9SxcRCLb5eAKQsSzg",
+    authDomain: "math-kangaroo.firebaseapp.com",
+    projectId: "math-kangaroo",
+    storageBucket: "math-kangaroo.firebasestorage.app",
+    messagingSenderId: "1029665532854",
+    appId: "1:1029665532854:web:fbd579ea6de4065cf6af17"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  let allStudents = [];
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'index.html'; return; }
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    if (!snap.exists() || snap.data().role !== 'admin') {
+      window.location.href = 'practice.html'; return;
+    }
+    await loadDashboard();
+    await loadStudents();
+    await loadLeaderboard();
+    await loadActivity();
+  });
+
+  async function loadDashboard() {
+    const snap = await getDocs(collection(db, 'users'));
+    let totalStudents = 0, totalAnswered = 0, totalCorrect = 0, totalTime = 0;
+    snap.forEach(d => {
+      const data = d.data();
+      if (data.role === 'student') {
+        totalStudents++;
+        const s = data.stats || {};
+        totalAnswered += s.totalAnswered || 0;
+        totalCorrect += s.totalCorrect || 0;
+        totalTime += s.totalTime || 0;
+      }
+    });
+    const rate = totalAnswered > 0 ? Math.round(totalCorrect/totalAnswered*100) : 0;
+    const avgT = totalAnswered > 0 ? (totalTime/totalAnswered).toFixed(1) : '-';
+
+    document.getElementById('summaryGrid').innerHTML = `
+      <div class="sum-card students"><div class="sc-icon">👥</div><span class="sc-val">${totalStudents}</span><div class="sc-label">注册学生</div></div>
+      <div class="sum-card answers"><div class="sc-icon">📝</div><span class="sc-val">${totalAnswered}</span><div class="sc-label">总答题数</div></div>
+      <div class="sum-card rate"><div class="sc-icon">🎯</div><span class="sc-val">${rate}%</span><div class="sc-label">总体正确率</div></div>
+      <div class="sum-card time"><div class="sc-icon">⏱</div><span class="sc-val">${avgT}s</span><div class="sc-label">平均用时/题</div></div>`;
+
+    // Year chart (aggregate across all students)
+    const years = [2013,2014,2015,2016,2017,2018,2019,2020,2021,2022];
+    const yearData = {};
+    years.forEach(y => { yearData[y] = { answered: 0, correct: 0 }; });
+    snap.forEach(d => {
+      const s = d.data().stats || {};
+      years.forEach(y => {
+        yearData[y].answered += s[`year_${y}_answered`] || 0;
+        yearData[y].correct += s[`year_${y}_correct`] || 0;
+      });
+    });
+    const maxA = Math.max(...years.map(y => yearData[y].answered), 1);
+    document.getElementById('yearChart').innerHTML = years.map(y => {
+      const a = yearData[y].answered;
+      const c = yearData[y].correct;
+      const pct = a > 0 ? Math.round(c/a*100) : 0;
+      const h = Math.round((a/maxA)*100);
+      return `<div class="bar-col">
+        <span class="bar-pct">${a>0?pct+'%':''}</span>
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;width:100%">
+          <div class="bar-body correct-bar" style="height:${pct}%;opacity:.9"></div>
+          <div class="bar-body answered-bar" style="height:${Math.round(h*.3)}%;opacity:.5"></div>
+        </div>
+        <span class="bar-xlabel">${String(y).slice(2)}</span>
+      </div>`;
+    }).join('');
+  }
+
+  async function loadStudents() {
+    const snap = await getDocs(collection(db, 'users'));
+    allStudents = [];
+    snap.forEach(d => {
+      const data = d.data();
+      if (data.role === 'student') allStudents.push({ id: d.id, ...data });
+    });
+    renderStudentsTable(allStudents);
+  }
+
+  function renderStudentsTable(students) {
+    if (!students.length) {
+      document.getElementById('studentsTable').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted)">暂无学生</td></tr>';
+      return;
+    }
+    document.getElementById('studentsTable').innerHTML = students.map(s => {
+      const stats = s.stats || {};
+      const ans = stats.totalAnswered || 0;
+      const cor = stats.totalCorrect || 0;
+      const rate = ans > 0 ? Math.round(cor/ans*100) : 0;
+      const avgT = stats.totalTime && ans > 0 ? (stats.totalTime/ans).toFixed(1) : '-';
+      const joined = s.createdAt ? new Date(s.createdAt).toLocaleDateString('zh-CN') : '-';
+      return `<tr>
+        <td><strong>${s.name || '-'}</strong></td>
+        <td style="color:var(--muted);font-size:0.8rem">${s.email || '-'}</td>
+        <td>${ans}</td>
+        <td><div class="rate-bar">
+          <div class="mini-bar"><div class="mini-fill" style="width:${rate}%"></div></div>
+          <span class="rate-txt">${ans>0?rate+'%':'-'}</span>
+        </div></td>
+        <td>${avgT}s</td>
+        <td style="color:var(--muted);font-size:0.8rem">${joined}</td>
+        <td style="display:flex;gap:6px">
+          <button class="btn-sm success" onclick="viewStudent('${s.id}','${s.name||''}')">详情</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  window.filterStudents = (q) => {
+    const filtered = allStudents.filter(s =>
+      (s.name||'').toLowerCase().includes(q.toLowerCase()) ||
+      (s.email||'').toLowerCase().includes(q.toLowerCase()));
+    renderStudentsTable(filtered);
+  };
+
+  async function loadLeaderboard() {
+    const snap = await getDocs(collection(db, 'users'));
+    const students = [];
+    snap.forEach(d => {
+      const data = d.data();
+      if (data.role === 'student') {
+        const s = data.stats || {};
+        if ((s.totalAnswered || 0) >= 10) {
+          const rate = Math.round((s.totalCorrect||0)/(s.totalAnswered||1)*100);
+          students.push({ name: data.name || data.email, answered: s.totalAnswered, rate });
+        }
+      }
+    });
+    students.sort((a,b) => b.rate - a.rate || b.answered - a.answered);
+    const rankIcons = ['🥇','🥈','🥉'];
+    const rankColors = ['gold','silver','bronze'];
+    document.getElementById('leaderboardList').innerHTML = students.length
+      ? students.map((s,i) => `
+          <div class="lb-item">
+            <div class="lb-rank ${rankColors[i]||''}">${rankIcons[i]||i+1}</div>
+            <div class="lb-name">${s.name}</div>
+            <div style="color:var(--muted);font-size:0.8rem;margin-right:12px">答了 ${s.answered} 题</div>
+            <div class="lb-stat">${s.rate}%</div>
+          </div>`).join('')
+      : '<div class="loading-text">还没有学生达到 10 题</div>';
+  }
+
+  async function loadActivity() {
+    // Get recent answers from all students
+    const usersSnap = await getDocs(collection(db, 'users'));
+    const allAnswers = [];
+    for (const userDoc of usersSnap.docs) {
+      const data = userDoc.data();
+      if (data.role !== 'student') continue;
+      const answersSnap = await getDocs(query(
+        collection(db, 'users', userDoc.id, 'answers'),
+        orderBy('timestamp', 'desc'), limit(5)
+      ));
+      answersSnap.forEach(d => allAnswers.push({ ...d.data(), studentName: data.name || data.email }));
+    }
+    allAnswers.sort((a,b) => b.timestamp.localeCompare(a.timestamp));
+    const recent = allAnswers.slice(0, 50);
+    const diffLabels = { easy:'⭐ 简单', medium:'⭐⭐ 中等', hard:'⭐⭐⭐ 困难' };
+    document.getElementById('activityTable').innerHTML = recent.length
+      ? recent.map(r => `<tr>
+          <td><strong>${r.studentName}</strong></td>
+          <td style="color:var(--muted)">#${r.questionId}</td>
+          <td>${r.year}</td>
+          <td>${diffLabels[r.difficulty]||r.difficulty}</td>
+          <td>${r.isCorrect ? '<span style="color:var(--easy);font-weight:800">✅ 正确</span>' : '<span style="color:var(--hard);font-weight:800">❌ 错误</span>'}</td>
+          <td>${r.timeTaken}s</td>
+          <td style="color:var(--muted);font-size:0.78rem">${new Date(r.timestamp).toLocaleString('zh-CN')}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="7" class="loading-text">暂无记录</td></tr>';
+  }
+
+  window.viewStudent = async (uid, name) => {
+    document.getElementById('modalStudentName').textContent = `📊 ${name} 的详情`;
+    document.getElementById('modalBody').innerHTML = '<div class="loading-text">加载中...</div>';
+    document.getElementById('modalOverlay').classList.add('show');
+
+    const snap = await getDoc(doc(db, 'users', uid));
+    const s = snap.data()?.stats || {};
+    const ans = s.totalAnswered || 0;
+    const cor = s.totalCorrect || 0;
+    const rate = ans > 0 ? Math.round(cor/ans*100) : 0;
+    const avgT = s.totalTime && ans > 0 ? (s.totalTime/ans).toFixed(1) : '-';
+
+    const years = [2013,2014,2015,2016,2017,2018,2019,2020,2021,2022];
+    const yearRows = years.map(y => {
+      const a = s[`year_${y}_answered`] || 0;
+      const c = s[`year_${y}_correct`] || 0;
+      const p = a > 0 ? Math.round(c/a*100) : 0;
+      return `<tr>
+        <td>${y}</td><td>${a}/30</td>
+        <td><div class="rate-bar" style="gap:6px">
+          <div class="mini-bar"><div class="mini-fill" style="width:${p}%"></div></div>
+          <span class="rate-txt">${a>0?p+'%':'-'}</span>
+        </div></td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('modalBody').innerHTML = `
+      <div class="modal-stats">
+        <div class="ms"><div class="v" style="color:var(--easy)">${cor}</div><div class="l">答对</div></div>
+        <div class="ms"><div class="v" style="color:var(--hard)">${ans-cor}</div><div class="l">答错</div></div>
+        <div class="ms"><div class="v" style="color:var(--accent)">${rate}%</div><div class="l">正确率</div></div>
+        <div class="ms"><div class="v" style="color:var(--accent4)">${avgT}s</div><div class="l">平均用时</div></div>
+      </div>
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="background:var(--surface)">
+          <th style="padding:8px 12px;text-align:left;font-size:0.72rem;color:var(--muted)">年份</th>
+          <th style="padding:8px 12px;text-align:left;font-size:0.72rem;color:var(--muted)">已答</th>
+          <th style="padding:8px 12px;text-align:left;font-size:0.72rem;color:var(--muted)">正确率</th>
+        </tr></thead>
+        <tbody>${yearRows}</tbody>
+      </table>`;
+  };
+
+  window.closeModal = (e) => {
+    if (e.target === document.getElementById('modalOverlay'))
+      document.getElementById('modalOverlay').classList.remove('show');
+  };
+
+  window.handleLogout = async () => { await signOut(auth); window.location.href = 'index.html'; };
+</script>
+<script>
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(`page-${name}`).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach((n,i) => {
+    const pages = ['dashboard','students','leaderboard','activity'];
+    n.classList.toggle('active', pages[i] === name);
+  });
+}
+</script>
+</body>
+</html>
