@@ -115,10 +115,6 @@
     transition:all .2s;display:none;}
   .btn-show.unlocked{display:inline-flex;align-items:center;gap:6px;}
   .btn-show.unlocked:hover{border-color:var(--accent);color:var(--accent);}
-  .btn-pdf{padding:10px 20px;border-radius:9px;border:2px solid rgba(110,231,183,.3);background:transparent;
-    color:#6ee7b7;font-family:'Nunito';font-weight:700;font-size:0.85rem;cursor:pointer;
-    transition:all .2s;display:inline-flex;align-items:center;gap:6px;text-decoration:none;}
-  .btn-pdf:hover{border-color:var(--easy);background:rgba(110,231,183,.08);}
   .answer-section{overflow:hidden;transition:max-height .5s ease;max-height:0;}
   .answer-section.visible{max-height:800px;}
   .answer-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin-top:14px;}
@@ -185,7 +181,6 @@
     .card-actions{flex-direction:column;gap:8px;margin-top:14px;}
     .btn-check{width:100%;padding:13px;font-size:0.95rem;border-radius:12px;}
     .btn-show{width:100%;padding:12px;font-size:0.9rem;border-radius:12px;justify-content:center;}
-    .btn-pdf{width:100%;padding:12px;font-size:0.9rem;border-radius:12px;justify-content:center;}
 
     /* score bar — more compact */
     .score-bar{padding:8px 14px;gap:10px;}
@@ -210,7 +205,6 @@
   .pill:active{transform:scale(.95);}
 </style>
 <link rel="manifest" href="manifest.json">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body>
 <nav>
@@ -255,7 +249,6 @@
     <div class="pill-group" id="levelGroup">
       <button class="pill active" data-level="3" onclick="setFilter('level','3')">Level 3–4</button>
       <button class="pill" data-level="56" onclick="setFilter('level','56')">Level 5–6</button>
-      <button class="pill" data-level="amc_mp" onclick="showAMCPDFViewer()">AMC 中低年级</button>
       <button class="pill" data-level="all" onclick="setFilter('level','all')">全部</button>
     </div>
   </div>
@@ -305,22 +298,6 @@
 </div>
 
 
-<div id="amcPDFViewer" style="display:none;">
-  <div class="controls" style="margin-top:0;">
-    <div class="control-group">
-      <label>选择年份</label>
-      <div class="pill-group" id="amcYearGroup">
-        <button class="pill active" onclick="loadAMCPDF('2017','2017 amc-MP.pdf')">2017</button>
-        <button class="pill" onclick="loadAMCPDF('2016','2016 amc-MP.pdf')">2016</button>
-        <button class="pill" onclick="loadAMCPDF('2015','2015英文.pdf')">2015</button>
-        <button class="pill" onclick="loadAMCPDF('2014','2014英文.pdf')">2014</button>
-        <button class="pill" onclick="loadAMCPDF('2013','2013英文.pdf')">2013</button>
-        <button class="pill" onclick="loadAMCPDF('2012','2012英文.pdf')">2012</button>
-        <button class="pill" onclick="loadAMCPDF('2011','2011英文.pdf')">2011</button>
-        <button class="pill" onclick="loadAMCPDF('2010','2010英文.pdf')">2010</button>
-        <button class="pill" onclick="loadAMCPDF('2009','2009英文.pdf')">2009</button>
-        <button class="pill" onclick="loadAMCPDF('2008','2008英文.pdf')">2008</button>
-      </div>
     </div>
     <div class="control-group">
       <label>&nbsp;</label>
@@ -716,64 +693,5 @@ function updateScoreBar(){
   document.getElementById('totalCount').textContent=total;
   document.getElementById('progressFill').style.width=(total>0?done/total*100:0)+'%';
 }
-
-  function showAMCPDFViewer() {
-    // Update pill UI
-    document.querySelectorAll('#levelGroup .pill').forEach(p => p.classList.remove('active'));
-    event.target.classList.add('active');
-    // Hide problem area, show PDF viewer
-    document.getElementById('problemArea').style.display = 'none';
-    document.getElementById('amcPDFViewer').style.display = 'block';
-    // Load default year
-    loadAMCPDF('2017', '2017 amc-MP.pdf');
-  }
-
-  function hideAMCPDFViewer() {
-    document.getElementById('amcPDFViewer').style.display = 'none';
-    document.getElementById('problemArea').style.display = 'block';
-    // Reset level pill
-    document.querySelectorAll('#levelGroup .pill').forEach(p => p.classList.remove('active'));
-    document.querySelector('#levelGroup .pill[data-level="3"]').classList.add('active');
-  }
-
-  function loadAMCPDF(year, filename) {
-    // Update year pill UI
-    document.querySelectorAll('#amcYearGroup .pill').forEach(p => p.classList.remove('active'));
-    event.target.classList.add('active');
-    const frame = document.getElementById('amcPDFFrame');
-    frame.innerHTML = '<p style="color:#888;padding:40px;">📄 加载中...</p>';
-    // Use PDF.js to render
-    if (typeof pdfjsLib === 'undefined') {
-      // Fallback: embed tag
-      frame.innerHTML = '<embed src="' + encodeURIComponent(filename) + '" type="application/pdf" width="100%" height="900px" style="border:none;">';
-      return;
-    }
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    frame.innerHTML = '<canvas id="amcPDFCanvas" style="width:100%;display:block;"></canvas>';
-    // Render all pages
-    pdfjsLib.getDocument(filename).promise.then(function(pdf) {
-      frame.innerHTML = '';
-      const totalPages = pdf.numPages;
-      function renderPage(pageNum) {
-        if (pageNum > totalPages) return;
-        pdf.getPage(pageNum).then(function(page) {
-          const viewport = page.getViewport({scale: 2.0});
-          const canvas = document.createElement('canvas');
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-          canvas.style.width = '100%';
-          canvas.style.display = 'block';
-          canvas.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
-          frame.appendChild(canvas);
-          page.render({canvasContext: canvas.getContext('2d'), viewport: viewport}).promise.then(function() {
-            renderPage(pageNum + 1);
-          });
-        });
-      }
-      renderPage(1);
-    }).catch(function(err) {
-      frame.innerHTML = '<p style="color:#f87171;padding:40px;">❌ 无法加载PDF: ' + err.message + '</p>';
-    });
-  }
 
 </script>
