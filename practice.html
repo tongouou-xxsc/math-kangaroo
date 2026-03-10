@@ -249,7 +249,6 @@
     <div class="pill-group" id="levelGroup">
       <button class="pill active" data-level="3" onclick="setFilter('level','3')">Level 3–4</button>
       <button class="pill" data-level="56" onclick="setFilter('level','56')">Level 5–6</button>
-      <button class="pill" data-level="amc8" onclick="setFilter('level','amc8')">AMC 8</button>
       <button class="pill" data-level="amc_mp" onclick="setFilter('level','amc_mp')">AMC 中低年级</button>
       <button class="pill" data-level="all" onclick="setFilter('level','all')">全部</button>
     </div>
@@ -435,7 +434,6 @@ async function handleLogout(){
 <script src="questions56.js"></script>
 <script src="questions_zh.js"></script>
 <script src="questionsAMC.js"></script>
-<script src="questions_amc8.js"></script>
 <script>
 let lang='en'; // 'en' or 'zh'
 
@@ -470,15 +468,15 @@ const ANON_LIMIT=10;
 function generateQuiz(){
   answers={};revealed={};attempts={};questionTimers={};
   score={correct:0,halfCorrect:0,wrong:0};
-  let pool=filters.level==='3'?[...QUESTIONS]:filters.level==='56'?[...QUESTIONS56]:filters.level==='amc8'?[...QUESTIONS_AMC8]:filters.level==='amc_mp'?[...AMC_QUESTIONS]:[...QUESTIONS,...QUESTIONS56,...QUESTIONS_AMC8,...AMC_QUESTIONS];
+  let pool=filters.level==='3'?[...QUESTIONS]:filters.level==='56'?[...QUESTIONS56]:filters.level==='amc_mp'?[...AMC_QUESTIONS]:[...QUESTIONS,...QUESTIONS56,...AMC_QUESTIONS];
   if(filters.diff!=='all') pool=pool.filter(q=>q.difficulty===filters.diff);
   if(filters.year!=='all') pool=pool.filter(q=>q.year===parseInt(filters.year));
   pool.sort(()=>Math.random()-.5);
   if(filters.count!=='all') pool=pool.slice(0,parseInt(filters.count));
   // Anon limit
-  // Hide lang button for AMC8 (English only)
+  // Hide lang button for AMC MP (English only)
   const langBtn = document.getElementById('langBtn');
-  if(langBtn) langBtn.style.display = (filters.level==='amc8'||filters.level==='amc_mp') ? 'none' : '';
+  if(langBtn) langBtn.style.display = filters.level==='amc_mp' ? 'none' : '';
   if(isAnon && pool.length>ANON_LIMIT) pool=pool.slice(0,ANON_LIMIT);
   currentQuestions=pool;
   renderProblems();updateScoreBar();
@@ -500,7 +498,7 @@ function renderProblems(){
       return `<div class="choice" id="choice-${q.id}-${ci}" onclick="selectChoice(${q.id},${ci})">
         <span class="choice-label">${L[ci]}</span><span>${txt}</span></div>`;
     }).join('');
-    const lvTag=q.id>=1001?'<span class="tag lv" style="background:rgba(16,185,129,.15);color:#34d399;border-color:rgba(16,185,129,.3)">AMC MP</span>':q.id>=1000?'<span class="tag lv" style="background:rgba(192,132,252,.15);color:#c084fc;border-color:rgba(192,132,252,.3)">AMC 8</span>':q.id>300?'<span class="tag lv">Lv 5-6</span>':'<span class="tag lv">Lv 3-4</span>';
+    const lvTag=q.id>=1001?'<span class="tag lv" style="background:rgba(16,185,129,.15);color:#34d399;border-color:rgba(16,185,129,.3)">AMC MP</span>':q.id>300?'<span class="tag lv">Lv 5-6</span>':'<span class="tag lv">Lv 3-4</span>';
     const pts=q.difficulty==='easy'?'3':q.difficulty==='medium'?'4':'5';
     return `<div class="problem-card ${q.difficulty}" id="card-${q.id}" style="animation-delay:${idx*.04}s">
       <div class="problem-header">
