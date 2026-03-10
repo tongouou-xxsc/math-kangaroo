@@ -470,7 +470,6 @@ async function handleLogout(){
 <script src="questions.js"></script>
 <script src="questions56.js"></script>
 <script src="questions_zh.js"></script>
-<script src="questionsAMC.js"></script>
 <script>
 let lang='en'; // 'en' or 'zh'
 
@@ -505,7 +504,7 @@ const ANON_LIMIT=10;
 function generateQuiz(){
   answers={};revealed={};attempts={};questionTimers={};
   score={correct:0,halfCorrect:0,wrong:0};
-  let pool=filters.level==='3'?[...QUESTIONS]:filters.level==='56'?[...QUESTIONS56]:filters.level==='amc_mp'?[...AMC_QUESTIONS]:[...QUESTIONS,...QUESTIONS56,...AMC_QUESTIONS];
+  let pool=filters.level==='3'?[...QUESTIONS]:filters.level==='56'?[...QUESTIONS56]:[...QUESTIONS,...QUESTIONS56];
   if(filters.diff!=='all') pool=pool.filter(q=>q.difficulty===filters.diff);
   if(filters.year!=='all') pool=pool.filter(q=>q.year===parseInt(filters.year));
   pool.sort(()=>Math.random()-.5);
@@ -513,7 +512,6 @@ function generateQuiz(){
   // Anon limit
   // Hide lang button for AMC MP (English only)
   const langBtn = document.getElementById('langBtn');
-  if(langBtn) langBtn.style.display = filters.level==='amc_mp' ? 'none' : '';
   if(isAnon && pool.length>ANON_LIMIT) pool=pool.slice(0,ANON_LIMIT);
   currentQuestions=pool;
   renderProblems();updateScoreBar();
@@ -526,32 +524,6 @@ function generateQuiz(){
   if(typeof pdfjsLib !== 'undefined') {
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   }
-  function renderPDFFigure(qId, pdfFile, pageNum) {
-    const container = document.getElementById('pdffig-' + qId);
-    if (!container || typeof pdfjsLib === 'undefined') return;
-    pdfjsLib.getDocument(pdfFile).promise.then(function(pdf) {
-      return pdf.getPage(pageNum);
-    }).then(function(page) {
-      const viewport = page.getViewport({scale: 1.5});
-      const canvas = document.createElement('canvas');
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      container.innerHTML = '';
-      container.appendChild(canvas);
-      page.render({canvasContext: canvas.getContext('2d'), viewport: viewport});
-    }).catch(function(err) {
-      if (container) container.innerHTML = '';
-    });
-  }
-  // Render all PDF figures for current questions
-  function renderAllPDFFigures() {
-    currentQuestions.forEach(function(q) {
-      if (q.pdfFile && q.pdfPage) {
-        renderPDFFigure(q.id, q.pdfFile, q.pdfPage);
-      }
-    });
-  }
-
   function renderProblems(){
   const area=document.getElementById('problemArea');
   if(!currentQuestions.length){
@@ -568,7 +540,6 @@ function generateQuiz(){
     }).join('');
     const lvTag=q.id>=1001?'<span class="tag lv" style="background:rgba(16,185,129,.15);color:#34d399;border-color:rgba(16,185,129,.3)">AMC MP</span>':q.id>300?'<span class="tag lv">Lv 5-6</span>':'<span class="tag lv">Lv 3-4</span>';
     const pts=q.difficulty==='easy'?'3':q.difficulty==='medium'?'4':'5';
-    const pdfBtn=q.pdfFile?'<a class="btn-pdf" href="'+encodeURIComponent(q.pdfFile)+'#page='+q.pdfPage+'" target="_blank">📄 查看原题</a>':'';
     return `<div class="problem-card ${q.difficulty}" id="card-${q.id}" style="animation-delay:${idx*.04}s">
       <div class="problem-header">
         <span class="problem-num">Q${idx+1}</span>
@@ -580,7 +551,6 @@ function generateQuiz(){
           <span class="timer-badge" id="timer-${q.id}">⏱ --s</span>
         </div>
       </div>
-      ${q.pdfFile ? '<div class="pdf-figure" id="pdffig-'+q.id+'"><div class="pdf-figure-loading">📄 加载图形中...</div></div>' : ''}
       <div class="problem-text">${qd.text.replace(/\n/g,'<br>')}</div>
       <div class="choices">${choices}</div>
       <div class="result-banner" id="result-${q.id}">
@@ -590,7 +560,6 @@ function generateQuiz(){
       <div class="card-actions">
         <button class="btn-check" id="btnc-${q.id}" onclick="checkAnswer(${q.id})">✔ 提交答案</button>
         <button class="btn-show" id="btns-${q.id}" onclick="toggleSolution(${q.id})">💡 查看解析</button>
-        ${pdfBtn}
       </div>
       <div class="answer-section" id="ans-${q.id}">
         <div class="answer-box">
@@ -601,8 +570,6 @@ function generateQuiz(){
       </div>
     </div>`;
   }).join('');
-
-  renderAllPDFFigures();
 
   // Intersection observer for timers
   const obs=new IntersectionObserver(entries=>{
