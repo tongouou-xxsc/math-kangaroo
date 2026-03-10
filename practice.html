@@ -135,14 +135,7 @@
   .empty-state{text-align:center;padding:60px 24px;color:var(--muted);}
   .empty-state .big-icon{font-size:56px;display:block;margin-bottom:14px;}
   .empty-state p{font-size:1rem;font-weight:600;}
-  .btn-translate{padding:7px 14px;border-radius:9px;border:2px solid rgba(168,85,247,.4);background:rgba(168,85,247,.1);
-    color:#c084fc;font-family:'Nunito';font-weight:700;font-size:0.8rem;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:5px;}
-  .btn-translate:hover{border-color:#c084fc;background:rgba(168,85,247,.2);}
-  .btn-translate:disabled{opacity:.5;cursor:not-allowed;}
-  .btn-translate.translated{border-color:rgba(110,231,183,.4);background:rgba(110,231,183,.1);color:var(--easy);}
-  .zh-text{display:none;color:#c0e8ff;font-size:0.88rem;margin-top:8px;line-height:1.7;font-weight:600;
-    background:rgba(124,159,255,.06);border:1px solid rgba(124,159,255,.15);border-radius:8px;padding:10px 14px;}
-  .zh-text.show{display:block;}
+
 </style>
 </head>
 <body>
@@ -363,9 +356,7 @@ function renderProblems(){
       <div class="card-actions">
         <button class="btn-check" id="btnc-${q.id}" onclick="checkAnswer(${q.id})">✔ 提交答案</button>
         <button class="btn-show" id="btns-${q.id}" onclick="toggleSolution(${q.id})">💡 查看解析</button>
-        <button class="btn-translate" id="btnt-${q.id}" onclick="translateQuestion(${q.id})">🀄 中文</button>
       </div>
-      <div class="zh-text" id="zh-${q.id}"></div>
       <div class="answer-section" id="ans-${q.id}">
         <div class="answer-box">
           <div class="answer-title">✅ 解题过程</div>
@@ -498,64 +489,6 @@ function toggleSolution(qid){
   const open=!sec.classList.contains('visible');
   sec.classList.toggle('visible',open);
   if(btn)btn.textContent=open?'🙈 收起解析':'💡 查看解析';
-}
-
-const translationCache={};
-async function translateQuestion(qid){
-  const btn=document.getElementById(`btnt-${qid}`);
-  const box=document.getElementById(`zh-${qid}`);
-  if(!btn||!box)return;
-  // Toggle if already translated
-  if(box.classList.contains('show')){
-    box.classList.remove('show');
-    btn.textContent='🀄 中文';
-    btn.classList.remove('translated');
-    return;
-  }
-  // Use cache
-  if(translationCache[qid]){
-    box.innerHTML=translationCache[qid];
-    box.classList.add('show');
-    btn.textContent='🙈 收起';
-    btn.classList.add('translated');
-    return;
-  }
-  // Call Claude API
-  btn.disabled=true;
-  btn.textContent='翻译中...';
-  const q=currentQuestions.find(q=>q.id===qid);
-  if(!q){btn.disabled=false;btn.textContent='🀄 中文';return;}
-  try{
-    const prompt=`将以下数学竞赛题目翻译成中文，保持数学符号和格式不变。只输出JSON，格式：{"text":"题目","choices":["选项A","选项B","选项C","选项D","选项E"]}
-
-题目：${q.text}
-选项：${q.choices.join(' | ')}`;
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
-        messages:[{role:'user',content:prompt}]
-      })
-    });
-    const data=await res.json();
-    const raw=data.content[0].text.replace(/```json|```/g,'').trim();
-    const parsed=JSON.parse(raw);
-    const L=['A','B','C','D','E'];
-    const html=`<div style="margin-bottom:8px;font-size:.9rem">${parsed.text}</div>`+
-      parsed.choices.map((c,i)=>`<div style="margin:3px 0"><span style="color:var(--accent4);font-weight:800">${L[i]})</span> ${c.replace(/^[A-E][)）]\s*/,'')}</div>`).join('');
-    translationCache[qid]=html;
-    box.innerHTML=html;
-    box.classList.add('show');
-    btn.textContent='🙈 收起';
-    btn.classList.add('translated');
-  }catch(e){
-    box.innerHTML='<span style="color:var(--accent2)">翻译失败，请重试</span>';
-    box.classList.add('show');
-    btn.textContent='🀄 重试';
-  }
-  btn.disabled=false;
 }
 
 function updateScoreBar(){
