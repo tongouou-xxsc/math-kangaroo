@@ -69,7 +69,8 @@
 <div class="layout">
   <div class="sidebar">
     <div class="sidebar-item active" onclick="showTab('overview')">📊 数据总览</div>
-    <div class="sidebar-item" onclick="showTab('students')">👥 学生管理</div>
+    <div class="sidebar-item" onclick="showTab('students')">👥 注册学生</div>
+    <div class="sidebar-item" onclick="showTab('visitors')">👤 访客列表</div>
     <div class="sidebar-item" onclick="showTab('leaderboard')">🏆 正确率排行</div>
     <div class="sidebar-item" onclick="showTab('activity')">📋 答题记录</div>
   </div>
@@ -89,7 +90,7 @@
 const SURL='https://fsxryejdnemypspnxfkz.supabase.co';
 const SKEY='sb_publishable_GbqihuzVApj7Cygd0o50qg_Q3DRSlW3';
 const sb=supabase.createClient(SURL,SKEY);
-let allProfiles=[], allAnswers=[], currentTab='overview';
+let allProfiles=[], allAnswers=[], allVisitors=[], allAnonAnswers=[], currentTab='overview';
 
 (async()=>{
   const {data:{session}}=await sb.auth.getSession();
@@ -103,11 +104,14 @@ let allProfiles=[], allAnswers=[], currentTab='overview';
 })();
 
 async function loadData(){
-  const [{data:p},{data:a}]=await Promise.all([
+  const [{data:p},{data:a},{data:v},{data:va}]=await Promise.all([
     sb.from('profiles').select('*').neq('role','admin').order('created_at',{ascending:false}),
-    sb.from('answers').select('*').order('created_at',{ascending:false}).limit(500)
+    sb.from('answers').select('*').order('created_at',{ascending:false}).limit(500),
+    sb.from('visitors').select('*').order('last_seen',{ascending:false}),
+    sb.from('anon_answers').select('*').order('created_at',{ascending:false}).limit(500)
   ]);
   allProfiles=p||[]; allAnswers=a||[];
+  allVisitors=v||[]; allAnonAnswers=va||[];
 }
 
 async function handleLogout(){await sb.auth.signOut();location.href='index.html';}
@@ -115,7 +119,7 @@ async function handleLogout(){await sb.auth.signOut();location.href='index.html'
 function showTab(tab){
   currentTab=tab;
   document.querySelectorAll('.sidebar-item').forEach((el,i)=>{
-    el.classList.toggle('active',['overview','students','leaderboard','activity'][i]===tab);
+    el.classList.toggle('active',['overview','students','visitors','leaderboard','activity'][i]===tab);
   });
   renderTab(tab);
 }
@@ -124,6 +128,7 @@ function renderTab(tab){
   const main=document.getElementById('main');
   if(tab==='overview') main.innerHTML=renderOverview();
   else if(tab==='students') main.innerHTML=renderStudents();
+  else if(tab==='visitors') main.innerHTML=renderVisitors();
   else if(tab==='leaderboard') main.innerHTML=renderLeaderboard();
   else if(tab==='activity') main.innerHTML=renderActivity();
 }
@@ -181,6 +186,102 @@ function renderOverview(){
       <div class="card-title">📅 各年份答题情况（注册+访客合计：${totalAllAnswers} 题）</div>
       ${bars}
     </div>`;
+}
+
+function renderVisitors(){
+  if(allVisitors.length===0) return `<h2>👤 访客列表</h2><div class="loading">暂无访客数据<br><small style="font-weight:400;font-size:.8rem">需先在 Supabase 执行 supabase_visitors.sql</small></div>`;
+
+  const now=new Date();
+  const day1=new Date(now-864e5).toISOString();
+  const day7=new Date(now-7*864e5).toISOString();
+
+  const rows=allVisitors.map((v,i)=>{
+    const va=allAnonAnswers.filter(a=>a.anon_id===v.anon_id);
+    const correct=va.filter(a=>a.is_correct).length;
+    const rate=va.length>0?Math.round(correct/va.length*100)+'%':'-';
+    const lastSeen=new Date(v.last_seen);
+    const lastStr=`${lastSeen.getMonth()+1}/${lastSeen.getDate()} ${lastSeen.getHours()}:${String(lastSeen.getMinutes()).padStart(2,'0')}`;
+    const firstStr=v.first_seen||'-';
+    const isToday=v.last_seen>day1;
+    const isWeek=v.last_seen>day7;
+    const statusDot=isToday
+      ?'<span style="color:#6ee7b7;font-size:1rem">●</span>'
+      :isWeek
+        ?'<span style="color:#f7c948;font-size:1rem">●</span>'
+        :'<span style="color:#555;font-size:1rem">●</span>';
+    return `<tr>
+      <td style="color:var(--muted);font-family:monospace;font-size:.78rem">${v.anon_id}</td>
+      <td>${statusDot} ${lastStr}</td>
+      <td>${firstStr}</td>
+      <td style="text-align:center">${v.visit_count||1}</td>
+      <td style="text-align:center">${va.length}</td>
+      <td style="text-align:center">${correct}</td>
+      <td style="text-align:center">${rate}</td>
+      <td><button class="btn-detail" onclick="showVisitor('${v.anon_id}')">详情</button></td>
+    </tr>`;
+  }).join('');
+
+  return `<h2>👤 访客列表</h2>
+    <div style="margin-bottom:14px;font-size:.82rem;color:var(--muted);font-weight:700">
+      <span style="color:#6ee7b7">● 今日活跃</span>&nbsp;&nbsp;
+      <span style="color:#f7c948">● 本周活跃</span>&nbsp;&nbsp;
+      <span style="color:#555">● 较久未访问</span>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <table>
+        <thead><tr>
+          <th>访客ID</th><th>最近访问</th><th>首次访问</th>
+          <th style="text-align:center">访问次数</th><th style="text-align:center">答题数</th>
+          <th style="text-align:center">答对</th><th style="text-align:center">正确率</th><th></th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+function showVisitor(anonId){
+  const v=allVisitors.find(x=>x.anon_id===anonId);
+  if(!v)return;
+  const va=allAnonAnswers.filter(a=>a.anon_id===anonId);
+  const correct=va.filter(a=>a.is_correct).length;
+  const rate=va.length>0?Math.round(correct/va.length*100):0;
+  const avgT=va.length>0?(va.reduce((s,a)=>s+(a.time_taken||0),0)/va.length).toFixed(1):'-';
+
+  const recentRows=va.slice(0,20).map(a=>{
+    const d=new Date(a.created_at);
+    const dstr=`${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+    const badge=a.is_correct
+      ?(a.attempt_number===1?'<span class="badge ok">✓ 满分</span>':'<span class="badge half">✓ 半分</span>')
+      :'<span class="badge fail">✗ 错误</span>';
+    return `<tr><td>${dstr}</td><td>${a.year||'?'}年</td><td>${a.difficulty==='easy'?'简单':a.difficulty==='medium'?'中等':'困难'}</td><td>${badge}</td><td>${a.time_taken||0}s</td></tr>`;
+  }).join('');
+
+  document.getElementById('modalTitle').textContent='访客详情';
+  document.getElementById('modalBody').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div style="background:var(--surface);border-radius:10px;padding:12px">
+        <div style="font-size:.7rem;color:var(--muted);font-weight:800;letter-spacing:1px;margin-bottom:4px">访客ID</div>
+        <div style="font-family:monospace;font-size:.8rem;color:var(--accent4)">${anonId}</div>
+      </div>
+      <div style="background:var(--surface);border-radius:10px;padding:12px">
+        <div style="font-size:.7rem;color:var(--muted);font-weight:800;letter-spacing:1px;margin-bottom:4px">访问次数</div>
+        <div style="font-family:'Fredoka One';font-size:1.4rem;color:var(--accent)">${v.visit_count||1}</div>
+      </div>
+      <div style="background:var(--surface);border-radius:10px;padding:12px">
+        <div style="font-size:.7rem;color:var(--muted);font-weight:800;letter-spacing:1px;margin-bottom:4px">答题数 / 正确率</div>
+        <div style="font-family:'Fredoka One';font-size:1.4rem;color:var(--easy)">${va.length} 题 · ${rate}%</div>
+      </div>
+      <div style="background:var(--surface);border-radius:10px;padding:12px">
+        <div style="font-size:.7rem;color:var(--muted);font-weight:800;letter-spacing:1px;margin-bottom:4px">平均用时</div>
+        <div style="font-family:'Fredoka One';font-size:1.4rem;color:var(--accent4)">${avgT}s</div>
+      </div>
+    </div>
+    <div style="font-family:'Fredoka One';color:var(--text);margin-bottom:10px">最近答题记录</div>
+    <table>
+      <thead><tr><th>时间</th><th>年份</th><th>难度</th><th>结果</th><th>用时</th></tr></thead>
+      <tbody>${recentRows||'<tr><td colspan="5" style="text-align:center;color:var(--muted)">暂无记录</td></tr>'}</tbody>
+    </table>`;
+  document.getElementById('modalOverlay').classList.add('show');
 }
 
 function renderStudents(){
