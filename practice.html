@@ -210,6 +210,7 @@
   .pill:active{transform:scale(.95);}
 </style>
 <link rel="manifest" href="manifest.json">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body>
 <nav>
@@ -492,7 +493,38 @@ function generateQuiz(){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-function renderProblems(){
+
+  // Render PDF figures using PDF.js
+  if(typeof pdfjsLib !== 'undefined') {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+  function renderPDFFigure(qId, pdfFile, pageNum) {
+    const container = document.getElementById('pdffig-' + qId);
+    if (!container || typeof pdfjsLib === 'undefined') return;
+    pdfjsLib.getDocument(pdfFile).promise.then(function(pdf) {
+      return pdf.getPage(pageNum);
+    }).then(function(page) {
+      const viewport = page.getViewport({scale: 1.5});
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      container.innerHTML = '';
+      container.appendChild(canvas);
+      page.render({canvasContext: canvas.getContext('2d'), viewport: viewport});
+    }).catch(function(err) {
+      if (container) container.innerHTML = '';
+    });
+  }
+  // Render all PDF figures for current questions
+  function renderAllPDFFigures() {
+    currentQuestions.forEach(function(q) {
+      if (q.pdfFile && q.pdfPage) {
+        renderPDFFigure(q.id, q.pdfFile, q.pdfPage);
+      }
+    });
+  }
+
+  function renderProblems(){
   const area=document.getElementById('problemArea');
   if(!currentQuestions.length){
     area.innerHTML='<div class="empty-state"><span class="big-icon">🤔</span><p>没有找到符合条件的题目</p></div>';return;
@@ -520,6 +552,7 @@ function renderProblems(){
           <span class="timer-badge" id="timer-${q.id}">⏱ --s</span>
         </div>
       </div>
+      ${q.pdfFile ? '<div class="pdf-figure" id="pdffig-'+q.id+'"><div class="pdf-figure-loading">📄 加载图形中...</div></div>' : ''}
       <div class="problem-text">${qd.text.replace(/\n/g,'<br>')}</div>
       <div class="choices">${choices}</div>
       <div class="result-banner" id="result-${q.id}">
@@ -540,6 +573,8 @@ function renderProblems(){
       </div>
     </div>`;
   }).join('');
+
+  renderAllPDFFigures();
 
   // Intersection observer for timers
   const obs=new IntersectionObserver(entries=>{
@@ -712,6 +747,11 @@ function updateScoreBar(){
   /* hide top nav stats/logout buttons on mobile (replaced by bottom nav) */
   .nav-user .btn-nav{display:none;}
 }
+
+  /* PDF viewer in card */
+  .pdf-figure{margin:12px 0 8px 0;border-radius:10px;overflow:hidden;background:#1a1a2e;border:1px solid rgba(255,255,255,0.08);}
+  .pdf-figure canvas{display:block;width:100%;height:auto;}
+  .pdf-figure-loading{padding:20px;text-align:center;color:#888;font-size:0.85rem;}
 </style>
 </body>
 </html>
