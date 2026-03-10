@@ -115,6 +115,10 @@
     transition:all .2s;display:none;}
   .btn-show.unlocked{display:inline-flex;align-items:center;gap:6px;}
   .btn-show.unlocked:hover{border-color:var(--accent);color:var(--accent);}
+  .btn-pdf{padding:10px 20px;border-radius:9px;border:2px solid rgba(110,231,183,.3);background:transparent;
+    color:#6ee7b7;font-family:'Nunito';font-weight:700;font-size:0.85rem;cursor:pointer;
+    transition:all .2s;display:inline-flex;align-items:center;gap:6px;text-decoration:none;}
+  .btn-pdf:hover{border-color:var(--easy);background:rgba(110,231,183,.08);}
   .answer-section{overflow:hidden;transition:max-height .5s ease;max-height:0;}
   .answer-section.visible{max-height:800px;}
   .answer-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin-top:14px;}
@@ -181,6 +185,7 @@
     .card-actions{flex-direction:column;gap:8px;margin-top:14px;}
     .btn-check{width:100%;padding:13px;font-size:0.95rem;border-radius:12px;}
     .btn-show{width:100%;padding:12px;font-size:0.9rem;border-radius:12px;justify-content:center;}
+    .btn-pdf{width:100%;padding:12px;font-size:0.9rem;border-radius:12px;justify-content:center;}
 
     /* score bar — more compact */
     .score-bar{padding:8px 14px;gap:10px;}
@@ -523,6 +528,7 @@ function renderProblems(){
       <div class="card-actions">
         <button class="btn-check" id="btnc-${q.id}" onclick="checkAnswer(${q.id})">✔ 提交答案</button>
         <button class="btn-show" id="btns-${q.id}" onclick="toggleSolution(${q.id})">💡 查看解析</button>
+        ${q.pdfFile?`<a class="btn-pdf" href="${encodeURIComponent(q.pdfFile)}#page=${q.pdfPage}" target="_blank">📄 查看原题</a>`:''}
       </div>
       <div class="answer-section" id="ans-${q.id}">
         <div class="answer-box">
