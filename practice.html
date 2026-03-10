@@ -9,7 +9,50 @@
 <meta name="theme-color" content="#0e0e1a">
 <title>袋鼠数学 · 练习</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+function showAMCPDFViewer() {
+  document.querySelectorAll('#levelGroup .pill').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('problemArea').style.display = 'none';
+  document.getElementById('amcPDFViewer').style.display = 'block';
+  loadAMCPDF('2017', '2017 amc-MP.pdf', document.querySelector('#amcYearGroup .pill'));
+}
+
+function hideAMCPDFViewer() {
+  document.getElementById('amcPDFViewer').style.display = 'none';
+  document.getElementById('problemArea').style.display = 'block';
+  document.querySelectorAll('#levelGroup .pill').forEach(p => p.classList.remove('active'));
+  document.querySelector('#levelGroup .pill[data-level="3"]').classList.add('active');
+}
+
+function loadAMCPDF(year, filename, btn) {
+  document.querySelectorAll('#amcYearGroup .pill').forEach(p => p.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const frame = document.getElementById('amcPDFFrame');
+  frame.innerHTML = '<p style="color:#888;padding:60px 0;text-align:center;">📄 加载中...</p>';
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  pdfjsLib.getDocument(filename).promise.then(function(pdf) {
+    frame.innerHTML = '';
+    const total = pdf.numPages;
+    function renderPage(n) {
+      if (n > total) return;
+      pdf.getPage(n).then(function(page) {
+        const vp = page.getViewport({scale: 2.0});
+        const canvas = document.createElement('canvas');
+        canvas.width = vp.width;
+        canvas.height = vp.height;
+        canvas.style.cssText = 'width:100%;display:block;border-bottom:1px solid rgba(255,255,255,0.05);';
+        frame.appendChild(canvas);
+        page.render({canvasContext: canvas.getContext('2d'), viewport: vp}).promise.then(() => renderPage(n + 1));
+      });
+    }
+    renderPage(1);
+  }).catch(function(err) {
+    frame.innerHTML = '<p style="color:#f87171;padding:40px;text-align:center;">❌ 无法加载 ' + filename + '</p>';
+  });
+}
+
+</script>
 <style>
   :root{--bg:#0e0e1a;--surface:#16162a;--card:#1e1e38;--border:#2e2e55;
     --accent:#f7c948;--accent2:#ff6b6b;--accent3:#6ee7b7;--accent4:#7c9fff;
@@ -298,13 +341,26 @@
 </div>
 
 
+<div id="amcPDFViewer" style="display:none;">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="color:#94a3b8;font-size:0.9rem;font-weight:600;white-space:nowrap;">选择年份：</span>
+      <div class="pill-group" id="amcYearGroup">
+        <button class="pill active" onclick="loadAMCPDF('2017','2017 amc-MP.pdf',this)">2017</button>
+        <button class="pill" onclick="loadAMCPDF('2016','2016 amc-MP.pdf',this)">2016</button>
+        <button class="pill" onclick="loadAMCPDF('2015','2015英文.pdf',this)">2015</button>
+        <button class="pill" onclick="loadAMCPDF('2014','2014英文.pdf',this)">2014</button>
+        <button class="pill" onclick="loadAMCPDF('2013','2013英文.pdf',this)">2013</button>
+        <button class="pill" onclick="loadAMCPDF('2012','2012英文.pdf',this)">2012</button>
+        <button class="pill" onclick="loadAMCPDF('2011','2011英文.pdf',this)">2011</button>
+        <button class="pill" onclick="loadAMCPDF('2010','2010英文.pdf',this)">2010</button>
+        <button class="pill" onclick="loadAMCPDF('2009','2009英文.pdf',this)">2009</button>
+        <button class="pill" onclick="loadAMCPDF('2008','2008英文.pdf',this)">2008</button>
+      </div>
     </div>
-    <div class="control-group">
-      <label>&nbsp;</label>
-      <button class="btn-generate" onclick="hideAMCPDFViewer()">← 返回练习</button>
-    </div>
+    <button class="btn-generate" style="white-space:nowrap;" onclick="hideAMCPDFViewer()">← 返回练习</button>
   </div>
-  <div id="amcPDFFrame" style="width:100%;margin-top:16px;border-radius:16px;overflow:hidden;background:#1a1a2e;min-height:600px;display:flex;align-items:center;justify-content:center;">
+  <div id="amcPDFFrame" style="width:100%;border-radius:16px;overflow:hidden;background:#1a1a2e;min-height:500px;display:flex;align-items:center;justify-content:center;">
     <p style="color:#888;">选择年份查看原题</p>
   </div>
 </div>
