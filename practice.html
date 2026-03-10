@@ -227,7 +227,7 @@
   padding:10px 24px;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
   <div style="display:flex;align-items:center;gap:10px;font-size:0.85rem;font-weight:700;color:#e8e8f0;">
     <span style="font-size:1.2rem">👋</span>
-    <span>你正在以<span style="color:#f7c948">访客模式</span>使用 — 答题记录保存在本机</span>
+    <span>你正在以<span style="color:#f7c948">访客模式</span>使用 — 每次最多 <span style="color:#f7c948">10题</span>，注册后无限制</span>
   </div>
   <button onclick="location.href='index.html'" style="padding:7px 18px;border-radius:999px;border:none;
     background:linear-gradient(135deg,#f7c948,#ff9a3c);color:#0e0e1a;
@@ -459,6 +459,8 @@ function setFilter(type,val){
   document.querySelectorAll(`#${g} .pill`).forEach(p=>p.classList.toggle('active',p.dataset[type]===val));
 }
 
+const ANON_LIMIT=10;
+
 function generateQuiz(){
   answers={};revealed={};attempts={};questionTimers={};
   score={correct:0,halfCorrect:0,wrong:0};
@@ -467,6 +469,8 @@ function generateQuiz(){
   if(filters.year!=='all') pool=pool.filter(q=>q.year===parseInt(filters.year));
   pool.sort(()=>Math.random()-.5);
   if(filters.count!=='all') pool=pool.slice(0,parseInt(filters.count));
+  // Anon limit
+  if(isAnon && pool.length>ANON_LIMIT) pool=pool.slice(0,ANON_LIMIT);
   currentQuestions=pool;
   renderProblems();updateScoreBar();
   document.getElementById('scoreBar').style.display=pool.length>0?'flex':'none';
@@ -531,6 +535,18 @@ function renderProblems(){
     });
   },{threshold:0.3});
   currentQuestions.forEach(q=>{const c=document.getElementById(`card-${q.id}`);if(c)obs.observe(c);});
+  // Anon paywall card
+  if(isAnon){
+    const wall=document.createElement('div');
+    wall.innerHTML=`<div style="margin-top:8px;border-radius:20px;background:linear-gradient(135deg,rgba(247,201,72,.12),rgba(124,159,255,.1));border:2px solid rgba(247,201,72,.3);padding:32px 28px;text-align:center;">
+      <div style="font-size:2.4rem;margin-bottom:12px">🦘</div>
+      <div style="font-family:'Fredoka One';font-size:1.4rem;color:#f7c948;margin-bottom:8px">访客每次最多做 ${ANON_LIMIT} 道题</div>
+      <div style="color:rgba(232,232,240,.7);font-size:.92rem;font-weight:600;line-height:1.7;margin-bottom:20px">注册免费账号，解锁全部 600 道题<br>答题记录永久保存，随时查看错题统计</div>
+      <a href="index.html" style="display:inline-block;padding:13px 36px;border-radius:999px;background:linear-gradient(135deg,#f7c948,#ff9a3c);color:#0e0e1a;font-family:'Fredoka One';font-size:1.1rem;text-decoration:none;box-shadow:0 4px 20px rgba(247,201,72,.4);">📝 免费注册，解锁全部题目</a>
+      <div style="margin-top:14px;font-size:.78rem;color:rgba(136,136,153,.7);font-weight:600">已有账号？<a href="index.html" style="color:#7c9fff;text-decoration:none">直接登录 →</a></div>
+    </div>`;
+    document.getElementById('problemArea').appendChild(wall);
+  }
 }
 
 const timerIv={};
