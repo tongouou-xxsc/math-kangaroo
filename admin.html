@@ -94,9 +94,10 @@ let allProfiles=[], allAnswers=[], currentTab='overview';
 (async()=>{
   const {data:{session}}=await sb.auth.getSession();
   if(!session){location.href='index.html';return;}
-  // check admin
-  const {data:prof}=await sb.from('profiles').select('role').eq('id',session.user.id).single();
-  if(prof?.role!=='admin'){location.href='practice.html';return;}
+  // check admin via user_metadata (bypasses RLS)
+  const {data:{user}} = await sb.auth.getUser();
+  const isAdmin = user?.user_metadata?.role === 'admin';
+  if(!isAdmin){location.href='practice.html';return;}
   await loadData();
   renderTab('overview');
 })();
