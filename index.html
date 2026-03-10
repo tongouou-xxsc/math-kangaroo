@@ -2,57 +2,65 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Math Kangaroo · 登录</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="袋鼠数学">
+<meta name="theme-color" content="#0e0e1a">
+<title>袋鼠数学竞赛</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦘</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{--bg:#0e0e1a;--surface:#16162a;--card:#1e1e38;--border:#2e2e55;
     --accent:#f7c948;--accent2:#ff6b6b;--accent4:#7c9fff;--text:#e8e8f0;--muted:#888899;--easy:#6ee7b7;}
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-height:100vh;
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-height:100vh;min-height:100dvh;
     display:flex;align-items:center;justify-content:center;
     background-image:radial-gradient(ellipse at 20% 50%,rgba(124,159,255,.08) 0%,transparent 60%),
                     radial-gradient(ellipse at 80% 20%,rgba(247,201,72,.08) 0%,transparent 60%);}
-  .container{width:100%;max-width:420px;padding:24px;}
-  .logo{text-align:center;margin-bottom:32px;}
-  .logo .icon{font-size:56px;display:block;animation:bounce 2s infinite;}
+  .container{width:100%;max-width:420px;padding:24px 20px;}
+  .logo{text-align:center;margin-bottom:28px;}
+  .logo .icon{font-size:64px;display:block;animation:bounce 2s infinite;}
   @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-  .logo h1{font-family:'Fredoka One';font-size:2rem;color:var(--accent);
+  .logo h1{font-family:'Fredoka One';font-size:2.2rem;color:var(--accent);
     text-shadow:0 0 30px rgba(247,201,72,.4);margin-top:8px;}
   .logo p{color:var(--muted);font-size:0.85rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-top:4px;}
-  .card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px;}
-  .tabs{display:flex;gap:4px;margin-bottom:28px;background:var(--surface);border-radius:10px;padding:4px;}
-  .tab{flex:1;padding:9px;border-radius:7px;border:none;cursor:pointer;
-    font-family:'Nunito';font-weight:800;font-size:0.9rem;transition:all .2s;background:transparent;color:var(--muted);}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:28px 24px;}
+  .tabs{display:flex;gap:4px;margin-bottom:24px;background:var(--surface);border-radius:12px;padding:4px;}
+  .tab{flex:1;padding:11px;border-radius:9px;border:none;cursor:pointer;
+    font-family:'Nunito';font-weight:800;font-size:1rem;transition:all .2s;background:transparent;color:var(--muted);}
   .tab.active{background:var(--accent);color:#0e0e1a;}
   .form{display:flex;flex-direction:column;gap:16px;}
   .form-group{display:flex;flex-direction:column;gap:6px;}
-  .form-group label{font-size:0.75rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
-  .form-group input{padding:12px 16px;border-radius:10px;border:2px solid var(--border);
-    background:var(--surface);color:var(--text);font-family:'Nunito';font-size:0.95rem;font-weight:600;
-    transition:border-color .2s;outline:none;}
+  .form-group label{font-size:0.78rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
+  .form-group input{padding:14px 16px;border-radius:12px;border:2px solid var(--border);
+    background:var(--surface);color:var(--text);font-family:'Nunito';font-size:1rem;font-weight:600;
+    transition:border-color .2s;outline:none;-webkit-appearance:none;}
   .form-group input:focus{border-color:var(--accent4);}
-  .btn-primary{padding:13px;border-radius:10px;border:none;
+  .btn-primary{padding:15px;border-radius:14px;border:none;
     background:linear-gradient(135deg,#f7c948,#ff9a3c);color:#0e0e1a;
-    font-family:'Fredoka One';font-size:1.1rem;cursor:pointer;transition:all .2s;margin-top:4px;
-    box-shadow:0 4px 20px rgba(247,201,72,.3);}
-  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(247,201,72,.4);}
-  .btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none;}
-  .msg{border-radius:8px;padding:10px 14px;font-size:0.85rem;font-weight:700;display:none;}
+    font-family:'Fredoka One';font-size:1.2rem;cursor:pointer;transition:all .2s;margin-top:4px;
+    box-shadow:0 4px 20px rgba(247,201,72,.3);width:100%;letter-spacing:.5px;}
+  .btn-primary:active{transform:scale(.97);}
+  .btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+  .msg{border-radius:10px;padding:12px 14px;font-size:0.88rem;font-weight:700;display:none;}
   .msg.show{display:block;}
   .msg.error{background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.3);color:var(--accent2);}
   .msg.success{background:rgba(110,231,183,.1);border:1px solid rgba(110,231,183,.3);color:var(--easy);}
-  .spin{display:inline-block;width:18px;height:18px;border:2px solid rgba(0,0,0,.3);
+  .spin{display:inline-block;width:20px;height:20px;border:2px solid rgba(0,0,0,.3);
     border-top-color:#0e0e1a;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;}
   @keyframes spin{to{transform:rotate(360deg)}}
+  .hint{text-align:center;margin-top:20px;font-size:0.8rem;color:var(--muted);font-weight:600;line-height:1.6;}
+  .hint span{color:var(--accent4);}
 </style>
+<link rel="manifest" href="manifest.json">
 </head>
 <body>
 <div class="container">
   <div class="logo">
     <span class="icon">🦘</span>
-    <h1>Math Kangaroo</h1>
+    <h1>袋鼠数学</h1>
     <p>Level 3–6 · 2013–2022</p>
   </div>
   <div class="card">
@@ -63,68 +71,48 @@
     <div id="loginForm" class="form">
       <div id="loginMsg" class="msg"></div>
       <div class="form-group"><label>邮箱</label>
-        <input type="email" id="loginEmail" placeholder="your@email.com"/></div>
+        <input type="email" id="loginEmail" placeholder="your@email.com" autocomplete="email"/></div>
       <div class="form-group"><label>密码</label>
-        <input type="password" id="loginPassword" placeholder="••••••••"
+        <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password"
           onkeydown="if(event.key==='Enter')handleLogin()"/></div>
       <button class="btn-primary" id="loginBtn" onclick="handleLogin()">登 录</button>
     </div>
     <div id="registerForm" class="form" style="display:none">
       <div id="registerMsg" class="msg"></div>
       <div class="form-group"><label>昵称</label>
-        <input type="text" id="regName" placeholder="例如：小明"/></div>
+        <input type="text" id="regName" placeholder="例如：小明" autocomplete="nickname"/></div>
       <div class="form-group"><label>邮箱</label>
-        <input type="email" id="regEmail" placeholder="your@email.com"/></div>
+        <input type="email" id="regEmail" placeholder="your@email.com" autocomplete="email"/></div>
       <div class="form-group"><label>密码（至少6位）</label>
-        <input type="password" id="regPassword" placeholder="••••••••"
+        <input type="password" id="regPassword" placeholder="••••••••" autocomplete="new-password"
           onkeydown="if(event.key==='Enter')handleRegister()"/></div>
       <button class="btn-primary" id="registerBtn" onclick="handleRegister()">创 建 账 号</button>
     </div>
   </div>
+  <div class="hint">📱 在浏览器菜单选择<span>「添加到主屏幕」</span><br>像APP一样使用！</div>
 </div>
 <script>
-const SURL = 'https://fsxryejdnemypspnxfkz.supabase.co';
-const SKEY = 'sb_publishable_GbqihuzVApj7Cygd0o50qg_Q3DRSlW3';
-const sb = supabase.createClient(SURL, SKEY);
-
-sb.auth.getSession().then(async ({data:{session}})=>{
+const SURL='https://fsxryejdnemypspnxfkz.supabase.co';
+const SKEY='sb_publishable_GbqihuzVApj7Cygd0o50qg_Q3DRSlW3';
+const sb=supabase.createClient(SURL,SKEY);
+sb.auth.getSession().then(async({data:{session}})=>{
   if(session) await doRedirect(session.user.id);
 });
-
 async function doRedirect(uid){
-  // Read user_metadata directly from auth
-  const {data:{user}, error} = await sb.auth.getUser();
-  console.log('=== ADMIN CHECK ===');
-  console.log('user:', user);
-  console.log('user_metadata:', user?.user_metadata);
-  console.log('role:', user?.user_metadata?.role);
-  console.log('error:', error);
-  if (user?.user_metadata?.role === 'admin') {
-    console.log('-> going to admin.html');
-    location.href = 'admin.html';
-    return;
-  }
-  console.log('-> going to practice.html');
-  location.href = 'practice.html';
+  const {data:{user}}=await sb.auth.getUser();
+  if(user?.user_metadata?.role==='admin'){location.href='admin.html';return;}
+  location.href='practice.html';
 }
-
-function showMsg(id,msg,type){
-  const el=document.getElementById(id);
-  el.textContent=msg; el.className=`msg show ${type}`;
-}
-function setBusy(btnId,busy,label){
-  const b=document.getElementById(btnId);
-  b.disabled=busy; b.innerHTML=busy?'<span class="spin"></span>':label;
-}
+function showMsg(id,msg,type){const el=document.getElementById(id);el.textContent=msg;el.className=`msg show ${type}`;}
+function setBusy(btnId,busy,label){const b=document.getElementById(btnId);b.disabled=busy;b.innerHTML=busy?'<span class="spin"></span>':label;}
 function errTxt(m){
-  if(m.includes('Invalid login')||m.includes('invalid_credentials')) return '邮箱或密码错误';
-  if(m.includes('already registered')) return '该邮箱已注册，请直接登录';
-  if(m.includes('valid email')) return '邮箱格式不正确';
-  if(m.includes('Password should')) return '密码至少需要6位';
-  if(m.includes('rate limit')) return '操作太频繁，请稍后再试';
+  if(m.includes('Invalid login')||m.includes('invalid_credentials'))return '邮箱或密码错误';
+  if(m.includes('already registered'))return '该邮箱已注册，请直接登录';
+  if(m.includes('valid email'))return '邮箱格式不正确';
+  if(m.includes('Password should'))return '密码至少需要6位';
+  if(m.includes('rate limit'))return '操作太频繁，请稍后再试';
   return '操作失败：'+m;
 }
-
 async function handleLogin(){
   const email=document.getElementById('loginEmail').value.trim();
   const pwd=document.getElementById('loginPassword').value;
@@ -135,7 +123,6 @@ async function handleLogin(){
   if(error){showMsg('loginMsg',errTxt(error.message),'error');setBusy('loginBtn',false,'登 录');}
   else await doRedirect(data.user.id);
 }
-
 async function handleRegister(){
   const name=document.getElementById('regName').value.trim();
   const email=document.getElementById('regEmail').value.trim();
@@ -146,15 +133,10 @@ async function handleRegister(){
   setBusy('registerBtn',true,'创 建 账 号');
   const {data,error}=await sb.auth.signUp({email,password:pwd,options:{data:{name}}});
   if(error){showMsg('registerMsg',errTxt(error.message),'error');setBusy('registerBtn',false,'创 建 账 号');return;}
-  // 手动写入 profile（触发器备用）
-  await sb.from('profiles').upsert({
-    id:data.user.id,name,email,role:'student',
-    total_answered:0,total_correct:0,total_time:0
-  });
+  await sb.from('profiles').upsert({id:data.user.id,name,email,role:'student',total_answered:0,total_correct:0,total_time:0});
   showMsg('registerMsg','注册成功！正在跳转...','success');
   setTimeout(()=>location.href='practice.html',1200);
 }
-
 function switchTab(tab){
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',(i===0)===(tab==='login')));
   document.getElementById('loginForm').style.display=tab==='login'?'flex':'none';

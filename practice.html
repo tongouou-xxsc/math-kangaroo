@@ -2,15 +2,19 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Math Kangaroo · 练习</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="袋鼠数学">
+<meta name="theme-color" content="#0e0e1a">
+<title>袋鼠数学 · 练习</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{--bg:#0e0e1a;--surface:#16162a;--card:#1e1e38;--border:#2e2e55;
     --accent:#f7c948;--accent2:#ff6b6b;--accent3:#6ee7b7;--accent4:#7c9fff;
     --text:#e8e8f0;--muted:#888899;--easy:#6ee7b7;--medium:#f7c948;--hard:#ff6b6b;}
-  *{box-sizing:border-box;margin:0;padding:0;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
   body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-height:100vh;overflow-x:hidden;}
   body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
     background-image:radial-gradient(1px 1px at 20% 30%,rgba(255,255,255,.3) 0%,transparent 100%),
@@ -136,7 +140,71 @@
   .empty-state .big-icon{font-size:56px;display:block;margin-bottom:14px;}
   .empty-state p{font-size:1rem;font-weight:600;}
 
+  /* ── MOBILE OPTIMIZATIONS ── */
+  @media(max-width:600px){
+    /* nav */
+    nav{padding:10px 14px;}
+    .nav-brand span{font-size:1.3rem;}
+    .nav-brand{font-size:1rem;}
+    .user-name{display:none;}
+    .btn-nav{padding:6px 10px;font-size:0.75rem;}
+
+    /* stats strip — horizontal scroll */
+    .stats-strip{padding:10px 14px;gap:8px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+    .stats-strip::-webkit-scrollbar{display:none;}
+    .stat-chip{white-space:nowrap;flex-shrink:0;font-size:0.75rem;padding:4px 10px;}
+
+    /* controls */
+    .controls{padding:14px;gap:12px;}
+    .control-group label{font-size:0.65rem;}
+    .pill{padding:8px 12px;font-size:0.8rem;}
+    .btn-generate{width:100%;padding:13px;font-size:1rem;}
+
+    /* problem cards */
+    .problem-area{padding:0 12px 120px;}
+    .problem-card{padding:18px 16px;border-radius:16px;margin-bottom:12px;}
+    .problem-text{font-size:0.97rem;line-height:1.7;margin-bottom:16px;}
+    .meta{gap:5px;}
+    .tag{font-size:0.62rem;padding:2px 7px;}
+    .timer-badge{font-size:0.72rem;padding:2px 7px;}
+
+    /* choices — 1 column on mobile for readability */
+    .choices{grid-template-columns:1fr;gap:8px;}
+    .choice{padding:13px 14px;font-size:0.95rem;border-radius:12px;}
+    .choice-label{width:26px;height:26px;font-size:0.8rem;}
+
+    /* result banner */
+    .result-banner{font-size:0.95rem;padding:12px 14px;}
+    .result-icon{font-size:1.4rem;}
+
+    /* action buttons — full width stack */
+    .card-actions{flex-direction:column;gap:8px;margin-top:14px;}
+    .btn-check{width:100%;padding:13px;font-size:0.95rem;border-radius:12px;}
+    .btn-show{width:100%;padding:12px;font-size:0.9rem;border-radius:12px;justify-content:center;}
+
+    /* score bar — more compact */
+    .score-bar{padding:8px 14px;gap:10px;}
+    .score-item{font-size:0.75rem;}
+    .score-item .val{font-size:0.95rem;}
+    .progress-bar{width:100px;}
+
+    /* lang button in nav */
+    #langBtn{display:none;}
+  }
+
+  /* PWA safe area */
+  @supports(padding:max(0px)){
+    .score-bar{padding-bottom:max(10px,env(safe-area-inset-bottom));}
+    nav{padding-top:max(12px,env(safe-area-inset-top));}
+  }
+
+  /* touch feedback */
+  .choice:active{transform:scale(.98);}
+  .btn-check:active{transform:scale(.97);}
+  .btn-generate:active{transform:scale(.98);}
+  .pill:active{transform:scale(.95);}
 </style>
+<link rel="manifest" href="manifest.json">
 </head>
 <body>
 <nav>
@@ -501,5 +569,31 @@ function updateScoreBar(){
   document.getElementById('progressFill').style.width=(total>0?done/total*100:0)+'%';
 }
 </script>
+<nav class="bottom-nav">
+  <a href="practice.html" class="bn-item active">
+    <span>📝</span><span>练习</span>
+  </a>
+  <a href="stats.html" class="bn-item">
+    <span>📊</span><span>统计</span>
+  </a>
+  <a href="#" class="bn-item" onclick="handleLogout()">
+    <span>🚪</span><span>退出</span>
+  </a>
+</nav>
+<style>
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;
+  background:rgba(22,22,42,.97);border-top:1px solid var(--border);
+  padding:8px 0;padding-bottom:max(8px,env(safe-area-inset-bottom));
+  z-index:200;justify-content:space-around;}
+.bn-item{display:flex;flex-direction:column;align-items:center;gap:2px;
+  text-decoration:none;color:var(--muted);font-size:0.7rem;font-weight:700;padding:4px 20px;}
+.bn-item span:first-child{font-size:1.4rem;}
+.bn-item.active{color:var(--accent);}
+@media(max-width:600px){
+  .bottom-nav{display:flex;}
+  /* hide top nav stats/logout buttons on mobile (replaced by bottom nav) */
+  .nav-user .btn-nav{display:none;}
+}
+</style>
 </body>
 </html>
