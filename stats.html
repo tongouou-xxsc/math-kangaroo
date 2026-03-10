@@ -5,200 +5,171 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Math Kangaroo · 我的统计</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{--bg:#0e0e1a;--surface:#16162a;--card:#1e1e38;--border:#2e2e55;
-    --accent:#f7c948;--accent2:#ff6b6b;--accent4:#7c9fff;--text:#e8e8f0;
-    --muted:#888899;--easy:#6ee7b7;--medium:#f7c948;--hard:#ff6b6b;}
+    --accent:#f7c948;--accent2:#ff6b6b;--accent4:#7c9fff;--text:#e8e8f0;--muted:#888899;--easy:#6ee7b7;--medium:#f7c948;}
   *{box-sizing:border-box;margin:0;padding:0;}
   body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-height:100vh;}
   nav{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;
     background:rgba(22,22,42,.9);border-bottom:1px solid var(--border);backdrop-filter:blur(10px);}
-  .nav-brand{display:flex;align-items:center;gap:10px;font-family:'Fredoka One';font-size:1.2rem;color:var(--accent);}
-  .nav-brand span{font-size:1.6rem;}
+  .nav-brand{font-family:'Fredoka One';font-size:1.2rem;color:var(--accent);display:flex;align-items:center;gap:8px;}
   .btn-nav{padding:7px 16px;border-radius:8px;border:1px solid var(--border);background:transparent;
     color:var(--muted);font-family:'Nunito';font-weight:700;font-size:0.8rem;cursor:pointer;transition:all .2s;}
   .btn-nav:hover{border-color:var(--accent4);color:var(--accent4);}
-  .btn-nav.primary{border-color:var(--accent);color:var(--accent);}
   .page{max-width:900px;margin:0 auto;padding:32px 24px;}
-  h2{font-family:'Fredoka One';font-size:1.6rem;color:var(--accent);margin-bottom:24px;
-    display:flex;align-items:center;gap:10px;}
-
-  /* Big stats */
-  .big-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:32px;}
-  .big-stat{background:var(--card);border:1px solid var(--border);border-radius:16px;
-    padding:20px;text-align:center;}
-  .big-stat .icon{font-size:2rem;margin-bottom:8px;display:block;}
-  .big-stat .val{font-family:'Fredoka One';font-size:2.2rem;display:block;}
-  .big-stat .label{color:var(--muted);font-size:0.78rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-top:4px;}
-  .big-stat.c .val{color:var(--easy);}
-  .big-stat.w .val{color:var(--hard);}
-  .big-stat.r .val{color:var(--accent);}
-  .big-stat.t .val{color:var(--accent4);}
-
-  /* Year breakdown */
-  .section-title{font-family:'Fredoka One';font-size:1.1rem;color:var(--text);margin-bottom:14px;}
-  .year-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:32px;}
-  .year-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 20px;}
-  .year-card .yr{font-family:'Fredoka One';font-size:1.1rem;color:var(--accent4);margin-bottom:10px;}
-  .bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
-  .bar-label{font-size:0.72rem;font-weight:700;color:var(--muted);width:36px;flex-shrink:0;}
-  .bar-track{flex:1;height:8px;background:var(--border);border-radius:999px;overflow:hidden;}
-  .bar-fill{height:100%;border-radius:999px;transition:width .8s ease;}
-  .bar-fill.correct{background:linear-gradient(90deg,var(--easy),#34d399);}
-  .bar-fill.answered{background:linear-gradient(90deg,var(--accent4),#93c5fd);}
-  .bar-pct{font-size:0.72rem;font-weight:800;width:36px;text-align:right;}
-
-  /* Difficulty breakdown */
-  .diff-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:32px;}
-  .diff-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;text-align:center;}
-  .diff-card.easy{border-top:3px solid var(--easy);}
-  .diff-card.medium{border-top:3px solid var(--medium);}
-  .diff-card.hard{border-top:3px solid var(--hard);}
-  .diff-card .name{font-weight:800;font-size:0.85rem;margin-bottom:10px;}
-  .diff-card.easy .name{color:var(--easy);}
-  .diff-card.medium .name{color:var(--medium);}
-  .diff-card.hard .name{color:var(--hard);}
-  .diff-stat{font-family:'Fredoka One';font-size:1.6rem;}
-  .diff-sub{color:var(--muted);font-size:0.75rem;font-weight:700;margin-top:2px;}
-
-  /* Recent history */
-  .history-list{display:flex;flex-direction:column;gap:8px;}
-  .history-item{background:var(--card);border:1px solid var(--border);border-radius:12px;
-    padding:12px 16px;display:flex;align-items:center;gap:12px;}
-  .hi-result{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;
-    justify-content:center;font-size:0.8rem;font-weight:800;flex-shrink:0;}
-  .hi-result.correct{background:rgba(110,231,183,.2);color:var(--easy);}
-  .hi-result.wrong{background:rgba(255,107,107,.15);color:var(--hard);}
-  .hi-info{flex:1;}
-  .hi-q{font-size:0.82rem;font-weight:700;color:var(--text);}
-  .hi-meta{font-size:0.72rem;color:var(--muted);font-weight:600;margin-top:2px;}
-  .hi-time{font-size:0.78rem;color:var(--accent4);font-weight:700;flex-shrink:0;}
-  .loading-text{text-align:center;padding:40px;color:var(--muted);font-weight:600;}
+  h2{font-family:'Fredoka One';font-size:1.6rem;color:var(--accent);margin-bottom:24px;}
+  .big-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:32px;}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px 22px;}
+  .stat-card .label{font-size:0.72rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  .stat-card .val{font-family:'Fredoka One';font-size:2rem;}
+  .stat-card.c .val{color:var(--easy);}
+  .stat-card.w .val{color:var(--accent2);}
+  .stat-card.r .val{color:var(--accent);}
+  .stat-card.t .val{color:var(--accent4);}
+  .section{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;margin-bottom:20px;}
+  .section-title{font-family:'Fredoka One';font-size:1.1rem;color:var(--text);margin-bottom:16px;}
+  .year-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .year-label{width:38px;font-family:'Fredoka One';font-size:0.85rem;color:var(--muted);}
+  .bar-wrap{flex:1;display:flex;flex-direction:column;gap:4px;}
+  .bar-bg{height:8px;background:var(--border);border-radius:999px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:999px;transition:width .6s ease;}
+  .bar-cov .bar-fill{background:var(--accent4);}
+  .bar-rate .bar-fill{background:var(--easy);}
+  .bar-meta{display:flex;justify-content:space-between;font-size:0.72rem;font-weight:700;color:var(--muted);}
+  .diff-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  .diff-card{background:var(--surface);border-radius:12px;padding:14px;text-align:center;}
+  .diff-card .d-name{font-size:0.75rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;color:var(--muted);}
+  .diff-card .d-rate{font-family:'Fredoka One';font-size:1.6rem;}
+  .diff-card.easy .d-rate{color:var(--easy);}
+  .diff-card.medium .d-rate{color:var(--medium);}
+  .diff-card.hard .d-rate{color:var(--accent2);}
+  table{width:100%;border-collapse:collapse;font-size:0.85rem;}
+  th{padding:8px 12px;text-align:left;font-size:0.7rem;font-weight:800;letter-spacing:1.5px;
+    text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);}
+  td{padding:10px 12px;border-bottom:1px solid rgba(46,46,85,.5);font-weight:600;}
+  .badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:0.72rem;font-weight:800;}
+  .badge.ok{background:rgba(110,231,183,.15);color:var(--easy);}
+  .badge.half{background:rgba(247,201,72,.15);color:var(--medium);}
+  .badge.fail{background:rgba(255,107,107,.15);color:var(--accent2);}
+  .loading{text-align:center;padding:48px;color:var(--muted);font-size:1.1rem;font-weight:700;}
 </style>
 </head>
 <body>
 <nav>
-  <div class="nav-brand"><span>🦘</span> Math Kangaroo</div>
-  <div style="display:flex;gap:8px">
-    <button class="btn-nav primary" onclick="window.location.href='practice.html'">🎯 去练习</button>
+  <div class="nav-brand">🦘 Math Kangaroo</div>
+  <div style="display:flex;gap:10px">
+    <button class="btn-nav" onclick="location.href='practice.html'">← 返回练习</button>
     <button class="btn-nav" onclick="handleLogout()">退出</button>
   </div>
 </nav>
-
 <div class="page">
-  <h2>📊 <span id="pageTitle">我的学习统计</span></h2>
-
-  <div id="content">
-    <div class="loading-text">⏳ 加载统计数据中...</div>
-  </div>
+  <h2>📊 我的学习统计</h2>
+  <div id="content"><div class="loading">加载中...</div></div>
 </div>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-  import { getFirestore, doc, getDoc, collection, query, orderBy, limit, getDocs }
-    from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<script>
+const SURL='https://fsxryejdnemypspnxfkz.supabase.co';
+const SKEY='sb_publishable_GbqihuzVApj7Cygd0o50qg_Q3DRSlW3';
+const sb=supabase.createClient(SURL,SKEY);
+let currentUser=null;
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyBDoFjVpeJKtnemdu9SxcRCLb5eAKQsSzg",
-    authDomain: "math-kangaroo.firebaseapp.com",
-    projectId: "math-kangaroo",
-    storageBucket: "math-kangaroo.firebasestorage.app",
-    messagingSenderId: "1029665532854",
-    appId: "1:1029665532854:web:fbd579ea6de4065cf6af17"
-  };
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+(async()=>{
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){location.href='index.html';return;}
+  currentUser=session.user;
+  await loadAll();
+})();
 
-  onAuthStateChanged(auth, async (user) => {
-    if (!user) { window.location.href = 'index.html'; return; }
-    document.getElementById('pageTitle').textContent = `${user.displayName || '我'}的学习统计`;
-    await renderStats(user.uid);
-  });
+async function handleLogout(){await sb.auth.signOut();location.href='index.html';}
 
-  window.handleLogout = async () => { await signOut(getAuth()); window.location.href = 'index.html'; };
+async function loadAll(){
+  // fetch profile + all answers
+  const [{data:prof},{data:ans}]=await Promise.all([
+    sb.from('profiles').select('*').eq('id',currentUser.id).single(),
+    sb.from('answers').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false})
+  ]);
+  renderPage(prof||{}, ans||[]);
+}
 
-  async function renderStats(uid) {
-    const snap = await getDoc(doc(db, 'users', uid));
-    if (!snap.exists()) return;
-    const s = snap.data().stats || {};
-    const answered = s.totalAnswered || 0;
-    const correct = s.totalCorrect || 0;
-    const wrong = answered - correct;
-    const rate = answered > 0 ? Math.round(correct/answered*100) : 0;
-    const avgT = s.totalTime && answered > 0 ? (s.totalTime/answered).toFixed(1) : '-';
+function renderPage(prof, ans){
+  const total=ans.length;
+  const correct=ans.filter(a=>a.is_correct).length;
+  const wrong=total-correct;
+  const rate=total>0?Math.round(correct/total*100):0;
+  const avgT=total>0?(ans.reduce((s,a)=>s+(a.time_taken||0),0)/total).toFixed(1):'-';
 
-    // Year breakdown
-    const years = [2013,2014,2015,2016,2017,2018,2019,2020,2021,2022];
-    const yearHtml = years.map(y => {
-      const a = s[`year_${y}_answered`] || 0;
-      const c = s[`year_${y}_correct`] || 0;
-      const pct = a > 0 ? Math.round(c/a*100) : 0;
-      const covPct = Math.round(a/30*100);
-      return `<div class="year-card">
-        <div class="yr">${y}</div>
-        <div class="bar-row">
-          <span class="bar-label">覆盖</span>
-          <div class="bar-track"><div class="bar-fill answered" style="width:${covPct}%"></div></div>
-          <span class="bar-pct" style="color:var(--accent4)">${a}/30</span>
-        </div>
-        <div class="bar-row">
-          <span class="bar-label">正确</span>
-          <div class="bar-track"><div class="bar-fill correct" style="width:${pct}%"></div></div>
-          <span class="bar-pct" style="color:var(--easy)">${pct}%</span>
-        </div>
-      </div>`;
-    }).join('');
-
-    // Difficulty breakdown
-    const diffs = ['easy','medium','hard'];
-    const diffNames = { easy:'⭐ 简单', medium:'⭐⭐ 中等', hard:'⭐⭐⭐ 困难' };
-    const diffHtml = diffs.map(d => {
-      const a = s[`diff_${d}_answered`] || 0;
-      const c = s[`diff_${d}_correct`] || 0;
-      const pct = a > 0 ? Math.round(c/a*100) : 0;
-      return `<div class="diff-card ${d}">
-        <div class="name">${diffNames[d]}</div>
-        <div class="diff-stat">${pct}%</div>
-        <div class="diff-sub">已答 ${a} 题</div>
-      </div>`;
-    }).join('');
-
-    // Recent answers
-    const recentSnap = await getDocs(query(
-      collection(db, 'users', uid, 'answers'),
-      orderBy('timestamp','desc'), limit(20)
-    ));
-    const recentHtml = recentSnap.empty
-      ? '<div class="loading-text">暂无答题记录</div>'
-      : recentSnap.docs.map(d => {
-          const r = d.data();
-          const diffLabel = {easy:'简单',medium:'中等',hard:'困难'}[r.difficulty] || r.difficulty;
-          return `<div class="history-item">
-            <div class="hi-result ${r.isCorrect ? 'correct':'wrong'}">${r.isCorrect ? '✓':'✗'}</div>
-            <div class="hi-info">
-              <div class="hi-q">题目 #${r.questionId} · ${r.year}年</div>
-              <div class="hi-meta">${diffLabel} · ${new Date(r.timestamp).toLocaleDateString('zh-CN')}</div>
-            </div>
-            <div class="hi-time">⏱ ${r.timeTaken}s</div>
-          </div>`;
-        }).join('');
-
-    document.getElementById('content').innerHTML = `
-      <div class="big-stats">
-        <div class="big-stat c"><span class="icon">✅</span><span class="val">${correct}</span><div class="label">答对题数</div></div>
-        <div class="big-stat w"><span class="icon">❌</span><span class="val">${wrong}</span><div class="label">答错题数</div></div>
-        <div class="big-stat r"><span class="icon">🎯</span><span class="val">${rate}%</span><div class="label">总正确率</div></div>
-        <div class="big-stat t"><span class="icon">⏱</span><span class="val">${avgT}s</span><div class="label">平均用时/题</div></div>
+  // year breakdown
+  const years=[2013,2014,2015,2016,2017,2018,2019,2020,2021,2022];
+  const yearRows=years.map(y=>{
+    const ya=ans.filter(a=>a.year===y);
+    const yc=ya.filter(a=>a.is_correct).length;
+    const cov=Math.min(ya.length,30);
+    const covPct=Math.round(cov/30*100);
+    const ratePct=ya.length>0?Math.round(yc/ya.length*100):0;
+    return `<div class="year-row">
+      <span class="year-label">${y}</span>
+      <div class="bar-wrap">
+        <div class="bar-bg bar-cov"><div class="bar-fill" style="width:${covPct}%"></div></div>
+        <div class="bar-bg bar-rate"><div class="bar-fill" style="width:${ratePct}%"></div></div>
+        <div class="bar-meta"><span>已做 ${ya.length} 题</span><span>正确率 ${ratePct}%</span></div>
       </div>
-      <div class="section-title">📅 各年份完成情况</div>
-      <div class="year-grid">${yearHtml}</div>
-      <div class="section-title">📊 各难度正确率</div>
-      <div class="diff-grid">${diffHtml}</div>
-      <div class="section-title" style="margin-bottom:14px">🕐 最近答题记录</div>
-      <div class="history-list">${recentHtml}</div>`;
-  }
+    </div>`;
+  }).join('');
+
+  // diff breakdown
+  const diffs=[['easy','⭐ 简单'],['medium','⭐⭐ 中等'],['hard','⭐⭐⭐ 困难']];
+  const diffCards=diffs.map(([d,label])=>{
+    const da=ans.filter(a=>a.difficulty===d);
+    const dc=da.filter(a=>a.is_correct).length;
+    const r=da.length>0?Math.round(dc/da.length*100):'-';
+    return `<div class="diff-card ${d}">
+      <div class="d-name">${label}</div>
+      <div class="d-rate">${r}${da.length>0?'%':''}</div>
+      <div style="font-size:.75rem;color:var(--muted);margin-top:4px">${da.length} 题</div>
+    </div>`;
+  }).join('');
+
+  // recent 20
+  const recent=ans.slice(0,20);
+  const rows=recent.map(a=>{
+    const d=new Date(a.created_at);
+    const dstr=`${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+    const badge=a.is_correct
+      ?(a.attempt_number===1?'<span class="badge ok">✓ 满分</span>':'<span class="badge half">✓ 半分</span>')
+      :'<span class="badge fail">✗ 错误</span>';
+    return `<tr>
+      <td>${dstr}</td>
+      <td>${a.year}</td>
+      <td>${a.difficulty==='easy'?'简单':a.difficulty==='medium'?'中等':'困难'}</td>
+      <td>${badge}</td>
+      <td>${a.time_taken||0}s</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('content').innerHTML=`
+    <div class="big-stats">
+      <div class="stat-card c"><div class="label">累计答对</div><div class="val">${correct}</div></div>
+      <div class="stat-card w"><div class="label">累计答错</div><div class="val">${wrong}</div></div>
+      <div class="stat-card r"><div class="label">总正确率</div><div class="val">${rate}%</div></div>
+      <div class="stat-card t"><div class="label">平均用时</div><div class="val">${avgT}s</div></div>
+    </div>
+    <div class="section">
+      <div class="section-title">📅 年份分布</div>
+      ${yearRows}
+    </div>
+    <div class="section">
+      <div class="section-title">🎯 难度分布</div>
+      <div class="diff-grid">${diffCards}</div>
+    </div>
+    <div class="section">
+      <div class="section-title">🕐 最近答题记录</div>
+      <table>
+        <thead><tr><th>时间</th><th>年份</th><th>难度</th><th>结果</th><th>用时</th></tr></thead>
+        <tbody>${rows||'<tr><td colspan="5" style="text-align:center;color:var(--muted)">暂无记录</td></tr>'}</tbody>
+      </table>
+    </div>`;
+}
 </script>
 </body>
 </html>
