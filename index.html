@@ -92,13 +92,19 @@ sb.auth.getSession().then(async ({data:{session}})=>{
 });
 
 async function doRedirect(uid){
-  // Try profiles table first
-  const {data, error} = await sb.from('profiles').select('role').eq('id', uid).single();
-  console.log('role check:', data, error);
-  if (data?.role === 'admin') { location.href = 'admin.html'; return; }
-  // Fallback: user_metadata (set manually via Supabase Auth)
-  const {data:{user}} = await sb.auth.getUser();
-  if (user?.user_metadata?.role === 'admin') { location.href = 'admin.html'; return; }
+  // Read user_metadata directly from auth
+  const {data:{user}, error} = await sb.auth.getUser();
+  console.log('=== ADMIN CHECK ===');
+  console.log('user:', user);
+  console.log('user_metadata:', user?.user_metadata);
+  console.log('role:', user?.user_metadata?.role);
+  console.log('error:', error);
+  if (user?.user_metadata?.role === 'admin') {
+    console.log('-> going to admin.html');
+    location.href = 'admin.html';
+    return;
+  }
+  console.log('-> going to practice.html');
   location.href = 'practice.html';
 }
 
