@@ -92,8 +92,14 @@ sb.auth.getSession().then(async ({data:{session}})=>{
 });
 
 async function doRedirect(uid){
-  const {data} = await sb.from('profiles').select('role').eq('id',uid).single();
-  location.href = (data?.role==='admin') ? 'admin.html' : 'practice.html';
+  // Try profiles table first
+  const {data, error} = await sb.from('profiles').select('role').eq('id', uid).single();
+  console.log('role check:', data, error);
+  if (data?.role === 'admin') { location.href = 'admin.html'; return; }
+  // Fallback: user_metadata (set manually via Supabase Auth)
+  const {data:{user}} = await sb.auth.getUser();
+  if (user?.user_metadata?.role === 'admin') { location.href = 'admin.html'; return; }
+  location.href = 'practice.html';
 }
 
 function showMsg(id,msg,type){
