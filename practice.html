@@ -220,6 +220,22 @@
   </div>
 </nav>
 
+<!-- Guest banner -->
+<div id="guestBanner" style="display:none;position:relative;z-index:10;
+  background:linear-gradient(90deg,rgba(247,201,72,.12),rgba(124,159,255,.1));
+  border-bottom:1px solid rgba(247,201,72,.2);
+  padding:10px 24px;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+  <div style="display:flex;align-items:center;gap:10px;font-size:0.85rem;font-weight:700;color:#e8e8f0;">
+    <span style="font-size:1.2rem">👋</span>
+    <span>你正在以<span style="color:#f7c948">访客模式</span>使用 — 答题记录保存在本机</span>
+  </div>
+  <button onclick="location.href='index.html'" style="padding:7px 18px;border-radius:999px;border:none;
+    background:linear-gradient(135deg,#f7c948,#ff9a3c);color:#0e0e1a;
+    font-family:'Nunito';font-weight:800;font-size:0.82rem;cursor:pointer;white-space:nowrap;">
+    📝 注册保存记录
+  </button>
+</div>
+
 <div class="stats-strip">
   <div class="stat-chip c">🌟 累计满分 <span class="val" id="totalCorrect">0</span> 题</div>
   <div class="stat-chip w">❌ 累计错误 <span class="val" id="totalWrong">0</span> 题</div>
@@ -295,15 +311,68 @@ const SKEY='sb_publishable_GbqihuzVApj7Cygd0o50qg_Q3DRSlW3';
 const sb=supabase.createClient(SURL,SKEY);
 let currentUser=null;
 
+// ── Anonymous guest support ──
+function getOrCreateAnonId(){
+  let id=localStorage.getItem('anon_id');
+  if(!id){id='anon_'+Math.random().toString(36).slice(2,10);localStorage.setItem('anon_id',id);}
+  return id;
+}
+
+let isAnon=false;
+let anonId=null;
+
 (async()=>{
   const {data:{session}}=await sb.auth.getSession();
-  if(!session){location.href='index.html';return;}
-  currentUser=session.user;
-  const name=currentUser.user_metadata?.name||currentUser.email;
-  document.getElementById('userAvatar').textContent=name[0].toUpperCase();
-  document.getElementById('userName').textContent=name;
-  await loadStats();
+  if(session){
+    // logged-in user
+    currentUser=session.user;
+    isAnon=false;
+    const name=currentUser.user_metadata?.name||currentUser.email;
+    document.getElementById('userAvatar').textContent=name[0].toUpperCase();
+    document.getElementById('userName').textContent=name;
+    document.getElementById('guestBanner').style.display='none';
+    await loadStats();
+  } else {
+    // anonymous guest
+    isAnon=true;
+    anonId=getOrCreateAnonId();
+    currentUser=null;
+    document.getElementById('userAvatar').textContent='👤';
+    document.getElementById('userName').textContent='访客';
+    document.getElementById('guestBanner').style.display='flex';
+    loadAnonStats();
+    // record visit
+    recordVisit();
+  }
 })();
+
+function loadAnonStats(){
+  const data=JSON.parse(localStorage.getItem('anon_stats')||'{"answered":0,"correct":0,"time":0}');
+  const ans=data.answered||0, cor=data.correct||0;
+  document.getElementById('totalCorrect').textContent=cor;
+  document.getElementById('totalWrong').textContent=ans-cor;
+  document.getElementById('overallRate').textContent=ans>0?Math.round(cor/ans*100)+'%':'-';
+  document.getElementById('avgTime').textContent=data.time&&ans>0?(data.time/ans).toFixed(1):'-';
+}
+
+async function recordVisit(){
+  // upsert visitor record (just id + last_seen + visit_count)
+  try{
+    const today=new Date().toISOString().slice(0,10);
+    const stored=JSON.parse(localStorage.getItem('anon_meta')||'{}');
+    const isNew=!stored.first_seen;
+    if(isNew) localStorage.setItem('anon_meta',JSON.stringify({first_seen:today,visits:1}));
+    else{stored.visits=(stored.visits||1)+1;localStorage.setItem('anon_meta',JSON.stringify(stored));}
+    // write to supabase visitors table
+    await sb.from('visitors').upsert({
+      anon_id:anonId,
+      first_seen:stored.first_seen||today,
+      last_seen:new Date().toISOString(),
+      visit_count:(stored.visits||1),
+      total_answered:JSON.parse(localStorage.getItem('anon_stats')||'{}').answered||0
+    },{onConflict:'anon_id'});
+  }catch(e){}
+}
 
 async function loadStats(){
   if(!currentUser)return;
@@ -317,14 +386,29 @@ async function loadStats(){
 }
 
 async function recordAnswer(qid,year,diff,isCorrect,timeTaken,attemptNum){
+  if(isAnon){
+    // store locally
+    const stats=JSON.parse(localStorage.getItem('anon_stats')||'{"answered":0,"correct":0,"time":0}');
+    stats.answered=(stats.answered||0)+1;
+    if(isCorrect)stats.correct=(stats.correct||0)+1;
+    stats.time=(stats.time||0)+timeTaken;
+    localStorage.setItem('anon_stats',JSON.stringify(stats));
+    // also push to supabase with anon_id (no user_id)
+    try{
+      await sb.from('anon_answers').insert({
+        anon_id:anonId,question_id:qid,year,difficulty:diff,
+        is_correct:isCorrect,attempt_number:attemptNum,time_taken:timeTaken
+      });
+      await recordVisit(); // update total_answered
+    }catch(e){}
+    loadAnonStats();
+    return;
+  }
   if(!currentUser)return;
   await sb.from('answers').insert({
     user_id:currentUser.id,question_id:qid,year,difficulty:diff,
     is_correct:isCorrect,attempt_number:attemptNum,time_taken:timeTaken
   });
-  // update aggregate
-  const inc={total_answered:1,total_time:timeTaken};
-  if(isCorrect) inc.total_correct=1;
   const {data:p}=await sb.from('profiles').select('total_answered,total_correct,total_time').eq('id',currentUser.id).single();
   if(p){
     await sb.from('profiles').update({
@@ -337,6 +421,7 @@ async function recordAnswer(qid,year,diff,isCorrect,timeTaken,attemptNum){
 }
 
 async function handleLogout(){
+  if(isAnon){location.href='index.html';return;}
   await sb.auth.signOut();
   location.href='index.html';
 }

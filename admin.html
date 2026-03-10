@@ -135,11 +135,22 @@ function renderOverview(){
   const rate=totalAnswers>0?Math.round(totalCorrect/totalAnswers*100):0;
   const avgT=totalAnswers>0?(allAnswers.reduce((s,a)=>s+(a.time_taken||0),0)/totalAnswers).toFixed(1):'-';
 
-  // year chart
+  // visitor stats
+  const now=new Date();
+  const day1=new Date(now-864e5).toISOString();
+  const day7=new Date(now-7*864e5).toISOString();
+  const totalVisitors=allVisitors.length;
+  const todayActive=allVisitors.filter(v=>v.last_seen>day1).length;
+  const weekActive=allVisitors.filter(v=>v.last_seen>day7).length;
+  const anonAnswers=allAnonAnswers.length;
+  const totalAllAnswers=totalAnswers+anonAnswers;
+
+  // year chart (combined registered + anon)
   const years=[2013,2014,2015,2016,2017,2018,2019,2020,2021,2022];
-  const maxCount=Math.max(...years.map(y=>allAnswers.filter(a=>a.year===y).length),1);
+  const allCombined=[...allAnswers,...allAnonAnswers];
+  const maxCount=Math.max(...years.map(y=>allCombined.filter(a=>a.year===y).length),1);
   const bars=years.map(y=>{
-    const ya=allAnswers.filter(a=>a.year===y);
+    const ya=allCombined.filter(a=>a.year===y);
     const pct=Math.round(ya.length/maxCount*100);
     const rp=ya.length>0?Math.round(ya.filter(a=>a.is_correct).length/ya.length*100):0;
     return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
@@ -152,13 +163,24 @@ function renderOverview(){
   }).join('');
 
   return `<h2>📊 数据总览</h2>
-    <div class="kpi-grid">
+    <div style="margin-bottom:10px;font-size:.78rem;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase">注册用户</div>
+    <div class="kpi-grid" style="margin-bottom:20px">
       <div class="kpi c"><div class="label">注册学生</div><div class="val">${totalStudents}</div></div>
-      <div class="kpi t"><div class="label">总答题数</div><div class="val">${totalAnswers}</div></div>
-      <div class="kpi r"><div class="label">总正确率</div><div class="val">${rate}%</div></div>
+      <div class="kpi t"><div class="label">答题数</div><div class="val">${totalAnswers}</div></div>
+      <div class="kpi r"><div class="label">正确率</div><div class="val">${rate}%</div></div>
       <div class="kpi w"><div class="label">平均用时</div><div class="val">${avgT}s</div></div>
     </div>
-    <div class="card"><div class="card-title">📅 各年份答题情况</div>${bars}</div>`;
+    <div style="margin-bottom:10px;font-size:.78rem;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase">访客流量</div>
+    <div class="kpi-grid" style="margin-bottom:24px">
+      <div class="kpi" style="border-color:rgba(192,132,252,.3)"><div class="label">总访客</div><div class="val" style="color:#c084fc">${totalVisitors}</div></div>
+      <div class="kpi" style="border-color:rgba(247,201,72,.3)"><div class="label">今日活跃</div><div class="val" style="color:#f7c948">${todayActive}</div></div>
+      <div class="kpi" style="border-color:rgba(124,159,255,.3)"><div class="label">7日活跃</div><div class="val" style="color:#7c9fff">${weekActive}</div></div>
+      <div class="kpi" style="border-color:rgba(110,231,183,.3)"><div class="label">访客答题数</div><div class="val" style="color:#6ee7b7">${anonAnswers}</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📅 各年份答题情况（注册+访客合计：${totalAllAnswers} 题）</div>
+      ${bars}
+    </div>`;
 }
 
 function renderStudents(){
