@@ -508,6 +508,7 @@ function renderProblems(){
     }).join('');
     const lvTag=q.id>=1001?'<span class="tag lv" style="background:rgba(16,185,129,.15);color:#34d399;border-color:rgba(16,185,129,.3)">AMC MP</span>':q.id>300?'<span class="tag lv">Lv 5-6</span>':'<span class="tag lv">Lv 3-4</span>';
     const pts=q.difficulty==='easy'?'3':q.difficulty==='medium'?'4':'5';
+    const pdfBtn=q.pdfFile?'<a class="btn-pdf" href="'+encodeURIComponent(q.pdfFile)+'#page='+q.pdfPage+'" target="_blank">📄 查看原题</a>':'';
     return `<div class="problem-card ${q.difficulty}" id="card-${q.id}" style="animation-delay:${idx*.04}s">
       <div class="problem-header">
         <span class="problem-num">Q${idx+1}</span>
@@ -528,7 +529,7 @@ function renderProblems(){
       <div class="card-actions">
         <button class="btn-check" id="btnc-${q.id}" onclick="checkAnswer(${q.id})">✔ 提交答案</button>
         <button class="btn-show" id="btns-${q.id}" onclick="toggleSolution(${q.id})">💡 查看解析</button>
-        ${q.pdfFile?`<a class="btn-pdf" href="${encodeURIComponent(q.pdfFile)}#page=${q.pdfPage}" target="_blank">📄 查看原题</a>`:''}
+        ${pdfBtn}
       </div>
       <div class="answer-section" id="ans-${q.id}">
         <div class="answer-box">
