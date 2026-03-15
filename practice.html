@@ -293,6 +293,7 @@ function loadAMCPDF(year, filename, btn) {
       <button class="pill" data-level="12" onclick="setFilter('level','12')">Level 1–2</button>
       <button class="pill active" data-level="3" onclick="setFilter('level','3')">Level 3–4</button>
       <button class="pill" data-level="56" onclick="setFilter('level','56')">Level 5–6</button>
+      <button class="pill" data-level="ph" onclick="setFilter('level','ph')">🕊️ 鸽巢原理</button>
       <button class="pill" data-level="all" onclick="setFilter('level','all')">全部</button>
     </div>
   </div>
@@ -504,6 +505,7 @@ async function handleLogout(){
 <script src="questions12.js"></script>
 <script src="questions.js"></script>
 <script src="questions56.js"></script>
+<script src="questions_pigeonhole.js"></script>
 <script src="questions_zh.js"></script>
 <script>
 let lang='en'; // 'en' or 'zh'
@@ -539,7 +541,7 @@ const ANON_LIMIT=10;
 function generateQuiz(){
   answers={};revealed={};attempts={};questionTimers={};
   score={correct:0,halfCorrect:0,wrong:0};
-  let pool=filters.level==='12'?[...QUESTIONS12]:filters.level==='3'?[...QUESTIONS]:filters.level==='56'?[...QUESTIONS56]:[...QUESTIONS12,...QUESTIONS,...QUESTIONS56];
+  let pool=filters.level==='12'?[...QUESTIONS12]:filters.level==='3'?[...QUESTIONS]:filters.level==='56'?[...QUESTIONS56]:filters.level==='ph'?[...QUESTIONS_PIGEONHOLE]:[...QUESTIONS12,...QUESTIONS,...QUESTIONS56,...QUESTIONS_PIGEONHOLE];
   if(filters.diff!=='all') pool=pool.filter(q=>q.difficulty===filters.diff);
   if(filters.year!=='all') pool=pool.filter(q=>q.year===parseInt(filters.year));
   pool.sort(()=>Math.random()-.5);
@@ -573,7 +575,7 @@ function generateQuiz(){
       return `<div class="choice" id="choice-${q.id}-${ci}" onclick="selectChoice(${q.id},${ci})">
         <span class="choice-label">${L[ci]}</span><span>${txt}</span></div>`;
     }).join('');
-    const lvTag=q.id>=2001?'<span class="tag lv" style="background:rgba(99,102,241,.15);color:#818cf8;border-color:rgba(99,102,241,.3)">Lv 1–2</span>':q.id>=1001?'<span class="tag lv" style="background:rgba(16,185,129,.15);color:#34d399;border-color:rgba(16,185,129,.3)">AMC MP</span>':q.id>300?'<span class="tag lv">Lv 5-6</span>':'<span class="tag lv">Lv 3-4</span>';
+    const lvTag=q.id>=3001?'<span class="tag lv" style="background:rgba(245,158,11,.15);color:#fbbf24;border-color:rgba(245,158,11,.3)">鸽巢</span>':q.id>=2001?'<span class="tag lv" style="background:rgba(99,102,241,.15);color:#818cf8;border-color:rgba(99,102,241,.3)">Lv 1–2</span>':q.id>=1001?'<span class="tag lv" style="background:rgba(16,185,129,.15);color:#34d399;border-color:rgba(16,185,129,.3)">AMC MP</span>':q.id>300?'<span class="tag lv">Lv 5-6</span>':'<span class="tag lv">Lv 3-4</span>';
     const pts=q.difficulty==='easy'?'3':q.difficulty==='medium'?'4':'5';
     return `<div class="problem-card ${q.difficulty}" id="card-${q.id}" style="animation-delay:${idx*.04}s">
       <div class="problem-header">
