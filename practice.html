@@ -179,7 +179,9 @@ function loadAMCPDF(year, filename, btn) {
   .progress-bar{width:180px;height:5px;background:var(--border);border-radius:999px;overflow:hidden;}
   .progress-fill{height:100%;background:linear-gradient(90deg,var(--easy),var(--accent));
     border-radius:999px;transition:width .4s ease;}
-  .empty-state{display:none;}
+  .empty-state{text-align:center;padding:60px 24px;color:var(--muted);}
+  .empty-state .big-icon{font-size:56px;display:block;margin-bottom:14px;}
+  .empty-state p{font-size:1rem;font-weight:600;}
 
   /* ── MOBILE OPTIMIZATIONS ── */
   @media(max-width:600px){
@@ -239,15 +241,7 @@ function loadAMCPDF(year, filename, btn) {
     nav{padding-top:max(12px,env(safe-area-inset-top));}
   }
 
-  .btn-back{
-    display:inline-flex;align-items:center;gap:8px;
-    padding:9px 20px;border-radius:999px;
-    border:2px solid var(--border);background:var(--surface);
-    color:var(--muted);font-family:'Nunito';font-weight:700;font-size:0.88rem;
-    cursor:pointer;transition:all .2s;white-space:nowrap;
-  }
-  .btn-back:hover{border-color:var(--accent4);color:var(--accent4);background:rgba(124,159,255,.06);}
-  .btn-back:active{transform:scale(.97);}
+  /* touch feedback */
   .choice:active{transform:scale(.98);}
   .btn-check:active{transform:scale(.97);}
   .btn-generate:active{transform:scale(.98);}
@@ -296,6 +290,7 @@ function loadAMCPDF(year, filename, btn) {
   <div class="control-group">
     <label>题库级别</label>
     <div class="pill-group" id="levelGroup">
+      <button class="pill" data-level="12" onclick="setFilter('level','12')">Level 1–2</button>
       <button class="pill active" data-level="3" onclick="setFilter('level','3')">Level 3–4</button>
       <button class="pill" data-level="56" onclick="setFilter('level','56')">Level 5–6</button>
       <button class="pill" data-level="all" onclick="setFilter('level','all')">全部</button>
@@ -364,7 +359,7 @@ function loadAMCPDF(year, filename, btn) {
         <button class="pill" onclick="loadAMCPDF('2008','2008英文.pdf',this)">2008</button>
       </div>
     </div>
-    <button class="btn-back" style="white-space:nowrap;" onclick="hideAMCPDFViewer()">← 返回练习</button>
+    <button class="btn-generate" style="white-space:nowrap;" onclick="hideAMCPDFViewer()">← 返回练习</button>
   </div>
   <div id="amcPDFFrame" style="width:100%;border-radius:16px;overflow:hidden;background:#1a1a2e;min-height:500px;display:flex;align-items:center;justify-content:center;">
     <p style="color:#888;">选择年份查看原题</p>
@@ -372,17 +367,7 @@ function loadAMCPDF(year, filename, btn) {
 </div>
 
 <div class="problem-area" id="problemArea">
-  <div class="empty-state">
-    <span class="big-icon">🦘</span>
-    <h3>准备好了吗？</h3>
-    <p>选择级别和难度，点击「开始练习」</p>
-    <div class="steps">
-      <div class="step"><span class="step-num">1</span> 选择题库级别和难易程度</div>
-      <div class="step"><span class="step-num">2</span> 按需筛选年份与题目数量</div>
-      <div class="step"><span class="step-num">3</span> 点击「开始练习」开始答题</div>
-    </div>
-    <div class="arrow-hint">↑ 在上方设置你的练习参数</div>
-  </div>
+  <div class="empty-state"><span class="big-icon">🦘</span><p>选择级别和难度，点击「开始练习」</p></div>
 </div>
 
 <div class="score-bar" id="scoreBar" style="display:none">
@@ -516,6 +501,7 @@ async function handleLogout(){
 }
 </script>
 
+<script src="questions12.js"></script>
 <script src="questions.js"></script>
 <script src="questions56.js"></script>
 <script src="questions_zh.js"></script>
@@ -553,7 +539,7 @@ const ANON_LIMIT=10;
 function generateQuiz(){
   answers={};revealed={};attempts={};questionTimers={};
   score={correct:0,halfCorrect:0,wrong:0};
-  let pool=filters.level==='3'?[...QUESTIONS]:filters.level==='56'?[...QUESTIONS56]:[...QUESTIONS,...QUESTIONS56];
+  let pool=filters.level==='12'?[...QUESTIONS12]:filters.level==='3'?[...QUESTIONS]:filters.level==='56'?[...QUESTIONS56]:[...QUESTIONS12,...QUESTIONS,...QUESTIONS56];
   if(filters.diff!=='all') pool=pool.filter(q=>q.difficulty===filters.diff);
   if(filters.year!=='all') pool=pool.filter(q=>q.year===parseInt(filters.year));
   pool.sort(()=>Math.random()-.5);
@@ -587,7 +573,7 @@ function generateQuiz(){
       return `<div class="choice" id="choice-${q.id}-${ci}" onclick="selectChoice(${q.id},${ci})">
         <span class="choice-label">${L[ci]}</span><span>${txt}</span></div>`;
     }).join('');
-    const lvTag=q.id>=1001?'<span class="tag lv" style="background:rgba(16,185,129,.15);color:#34d399;border-color:rgba(16,185,129,.3)">AMC MP</span>':q.id>300?'<span class="tag lv">Lv 5-6</span>':'<span class="tag lv">Lv 3-4</span>';
+    const lvTag=q.id>=2001?'<span class="tag lv" style="background:rgba(99,102,241,.15);color:#818cf8;border-color:rgba(99,102,241,.3)">Lv 1–2</span>':q.id>=1001?'<span class="tag lv" style="background:rgba(16,185,129,.15);color:#34d399;border-color:rgba(16,185,129,.3)">AMC MP</span>':q.id>300?'<span class="tag lv">Lv 5-6</span>':'<span class="tag lv">Lv 3-4</span>';
     const pts=q.difficulty==='easy'?'3':q.difficulty==='medium'?'4':'5';
     return `<div class="problem-card ${q.difficulty}" id="card-${q.id}" style="animation-delay:${idx*.04}s">
       <div class="problem-header">
